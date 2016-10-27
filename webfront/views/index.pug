@@ -1,0 +1,7 @@
+html
+	head
+		title= title
+	body
+		each photo_path in photo_paths
+			//- change the ip address below when delopyling on cloud
+			img(src= "http://localhost:8080/photo/"+photo_path alt= "comic" + photo_path)

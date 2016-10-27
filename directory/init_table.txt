@@ -1,0 +1,10 @@
+create keyspace photo with replication = {'class':'SimpleStrategy','replication_factor':1};
+
+use photo;
+create table photo (pid int primary key, pindex varchar);
+
+insert into photo (pid, pindex) values ( 1, '001');
+insert into photo (pid, pindex) values ( 2, '002');
+insert into photo (pid, pindex) values ( 3, '003');
+insert into photo (pid, pindex) values ( 4, '004');
+insert into photo (pid, pindex) values ( 5, '005');
