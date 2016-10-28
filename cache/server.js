@@ -9,8 +9,8 @@ const fs = require('fs');
 var client = redis.createClient();
 
 // if an error occurs, print it to the console
-client.on('error', function (err) {
-	console.log("Error " + err);
+client.on('error', function(err) {
+  console.log("Error " + err);
 });
 
 // set the server listening port
@@ -24,33 +24,36 @@ app.use(responseTime());
 
 // serve images in /photos/
 app.get('/photo/:photoid', function(req, res) {
-	var photoid = req.params.photoid;
-	
-	// res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
+  var photoid = req.params.photoid;
 
-	// check redis cache first; if no hit, read from disk and cache it in readis
-	client.get(photoid, function(error, result) {
-		if (result) {		
-			res.setHeader('Content-Type', 'image/gif');
-			res.end(new Buffer(result, 'base64'));
-			console.log((new Date()).toTimeString(), {'source': 'redis'});
-		} else {
-			var photo_path = __dirname + '/imgs/phd_' + photoid + '.gif';
-			fs.readFile(photo_path, function(err, data) {
-				if (err) console.log("Error " + err);
-				res.setHeader('Content-Type', 'image/gif');
-				res.end(data);
-				console.log((new Date()).toTimeString(), {'source': 'dfs'});
+  // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
 
-				// set a 120 sec expiration time
-				client.setex(photoid, 120, new Buffer(data).toString('base64'));
-			});
-		}
-	});
+  // check redis cache first; if no hit, read from disk and cache it in readis
+  client.get(photoid, function(error, result) {
+    if (result) {
+      res.setHeader('Content-Type', 'image/gif');
+      res.end(new Buffer(result, 'base64'));
+      console.log((new Date()).toTimeString(), {
+        'source': 'redis'
+      });
+    } else {
+      var photo_path = __dirname + '/imgs/phd_' + photoid + '.gif';
+      fs.readFile(photo_path, function(err, data) {
+        if (err) console.log("Error " + err);
+        res.setHeader('Content-Type', 'image/gif');
+        res.end(data);
+        console.log((new Date()).toTimeString(), {
+          'source': 'dfs'
+        });
+
+        // set a 120 sec expiration time
+        client.setex(photoid, 120, new Buffer(data).toString('base64'));
+      });
+    }
+  });
 });
 
 
 app.listen(app.get('port'), function() {
-	console.log('Server listening on port: ', app.get('port'));
+  console.log('Server listening on port: ', app.get('port'));
 });
-

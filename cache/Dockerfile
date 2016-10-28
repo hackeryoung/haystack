@@ -20,7 +20,7 @@ COPY start_service.sh /root/app
 EXPOSE 8080
 
 # Start the service
-CMD ["/bin/bash", "start_service.sh"] 
+CMD ["/bin/bash", "start_service.sh"]
 
-	# Sadly this instruction not working....
-	# CMD '/usr/bin/redis-server && npm start'
+# Sadly this instruction not working....
+# CMD '/usr/bin/redis-server && npm start'
