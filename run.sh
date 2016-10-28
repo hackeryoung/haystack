@@ -39,8 +39,8 @@ CACHE_IP=172.20.0.5
 # DATA='/data/string.txt'
 
 # Set the port
-STORAGE_SERVER_PORT=8080 # cache server
 PROXY_SERVER_PORT=80
+STORAGE_SERVER_PORT=8080 # cache server
 
 
 
@@ -79,6 +79,8 @@ docker network create \
 # docker run -d --name $DATA_CONTAINER $DATA_IMAGE
 
 # Create the Cache server container
+# Currently use a Docker data volume to simulate Distributed File System
+# indicated by flag '-v'
 docker run -itd \
   --name $CACHE_CONTAINER \
   --network $NETWORK \
