@@ -1,5 +1,8 @@
 # Facebook Haystack Implementation
 
+## Specs 
+URL: `http://<Cache>/<Machine id>/<Logical volume, Photo>`
+
 ## Getting Started
 Be sure to install Docker 1.12.1 on the machine that runs this system
 
