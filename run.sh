@@ -61,10 +61,10 @@ docker build -t $CACHE_IMAGE $LOCAL_CACHE_DIR
 
 
 #########################################################################
-# Start running Hystack prototype
+# Start running Haystack prototype
 #########################################################################
 echo "-----------------------------------------------------------"
-echo "Start running Hystack prototype"
+echo "Start running Haystack prototype"
 echo "-----------------------------------------------------------"
 
 # Create a bridge network for the components
