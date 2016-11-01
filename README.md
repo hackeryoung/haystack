@@ -4,10 +4,10 @@
 URL: `http://<Cache>/<Machine id>/<Logical volume, Photo>`
 
 ### Read
-<img src="./doc/imgs/read.png " style="width: 50%;" align="center"/>
+<img src="./doc/imgs/read.png " style="width: 400px;" align="center"/>
 
 ### Write
-<img src="./doc/imgs/write.png" style="width: 50%;" align="center"/>
+<img src="./doc/imgs/write.png" style="width: 400px;" align="center"/>
 
 ## Getting Started
 Be sure to install Docker 1.12.1 on the machine that runs this system
