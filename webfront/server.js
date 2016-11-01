@@ -2,8 +2,11 @@
 const app = require('express')();
 const responseTime = require('response-time');
 const shuffle = require('shuffle-array');
-
 const cassandra = require('cassandra-driver');
+
+const redis = require('redis');
+const redis_client = redis.createClient();
+
 const db_client = new cassandra.Client({
   contactPoints: ['172.20.0.4'],
   keyspace: 'photo'
@@ -63,17 +66,35 @@ app.get('/photo/:name/', (req, res) => {
     'second': 2,
   };
 
-  const query = 'SELECT pindex FROM photo WHERE pid = ' + stores[req.params.name];
-
-  db_client.execute(query, {prepare: true}, (err, result) => {
+  const pid = stores[req.params.name];
+  redis_client.get(pid, (err, result) => {
     if (err) console.log(err);
 
-    const photo_path = url + result.rows[0].pindex;
-    res.render('photo', {
-      title: req.params.name,
-      photo_path: photo_path,
-    });
+    if (result) {
+      console.log('Cache hit');
+      res.render('photo', {
+        title: req.params.name,
+        photo_path: result,
+      });
+    } else {
+      const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
+
+      db_client.execute(query, {prepare: true}, (err, result) => {
+        if (err) console.log(err);
+
+        const photo_path = url + result.rows[0].pindex;
+
+        redis_client.setex(pid, 120, photo_path);
+        console.log('Cache updated');
+
+        res.render('photo', {
+          title: req.params.name,
+          photo_path: photo_path,
+        });
+      });
+    }
   });
+
 });
 
 app.listen(app.get('port'), function() {
