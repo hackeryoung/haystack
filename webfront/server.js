@@ -21,6 +21,7 @@ app.use(responseTime());
 app.set('view engine', 'pug');
 
 photo_num = 5;
+url = "http://localhost:8080/photo/"
 
 app.get('/', (req, res) => {
   var num = 3;
@@ -45,16 +46,35 @@ app.get('/', (req, res) => {
 
     var photo_paths = new Array(num);
     for (var i = 0; i < num; i++) {
-      photo_paths[i] = result.rows[i].pindex;
+      photo_paths[i] = url + result.rows[i].pindex;
     }
 
     res.render('index', {
       title: 'Comic Gallery',
-      photo_paths: photo_paths
+      photo_paths: photo_paths,
     });
   });
 });
 
+app.get('/photo/:name/', (req, res) => {
+  // stored photo names
+  const stores = {
+    'first': 1,
+    'second': 2,
+  };
+
+  const query = 'SELECT pindex FROM photo WHERE pid = ' + stores[req.params.name];
+
+  db_client.execute(query, {prepare: true}, (err, result) => {
+    if (err) console.log(err);
+
+    const photo_path = url + result.rows[0].pindex;
+    res.render('photo', {
+      title: req.params.name,
+      photo_path: photo_path,
+    });
+  });
+});
 
 app.listen(app.get('port'), function() {
   console.log('Server listening on port: ', app.get('port'));
