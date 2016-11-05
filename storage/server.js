@@ -9,7 +9,7 @@ const fs = require('fs');
 var client = redis.createClient();
 
 // Set key value pair: [photoid, [offset, size, type]]
-// client.set('1', ['0', '1024', 'jpg'])
+client.rpush(['1', '0', '1024', 'jpg'])
 
 // set the server listening port
 app.set('port', (process.env.PORT || 8080));
@@ -30,11 +30,15 @@ app.get('/:lvid/:photoid', function(req, res) {
   console.log('logical volumn id: '+lvid);
   console.log('photo id: '+photoid);
 
-  // client.get(photoid, function(err, reply) {
-  //   console.log(reply);
-  // })
+  client.lrange(photoid, 0, -1, function(err, reply) {
+    console.log(reply);
+    var offset = int(reply[0]);
+    var size = int(reply[1]);
+    var type = reply[2];
+    
+  });
 
-  res.send('OK')
+  res.send('OK');
 });
 
 // WRITE request
