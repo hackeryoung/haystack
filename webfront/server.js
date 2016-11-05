@@ -24,10 +24,32 @@ app.use(responseTime());
 app.set('view engine', 'pug');
 
 photo_num = 5;
-url = "http://localhost:8080/photo/"
+class UrlBuilder {
+  query(pid, resolve) {
+    const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
+    // no promise support for cassandra client
+    db_client.execute(query, {prepare: true}, (err, result) => {
+        if (err) console.log(err);
+
+        const pindx = result.rows[0].pindex;
+        // stub TODO
+        const photo_path = this.build(pindx, 'localhost:8080', 1, 1);
+        resolve(photo_path);
+      }
+    );
+  }
+
+  build(pid, cacheUrl, machineId, logicialVolId) {
+    // sample: http://localhost:8080/machineId/logicialVolId/pid
+    const url = "http://" + [cacheUrl, machineId, logicialVolId, pid].join("/");
+    console.log("Url built: " + url);
+    return url;
+  }
+}
 
 app.get('/', (req, res) => {
   var num = 3;
+  const builder = new UrlBuilder();
   // randomly generate $num photoids to simulate a dynamic webpage
   // and generate corresponding query
   var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
@@ -41,7 +63,6 @@ app.get('/', (req, res) => {
   query += ' )';
 
   // console.log(query);
-
   db_client.execute(query, ids, {
     prepare: true
   }, function(err, result) {
@@ -49,7 +70,10 @@ app.get('/', (req, res) => {
 
     var photo_paths = new Array(num);
     for (var i = 0; i < num; i++) {
-      photo_paths[i] = url + result.rows[i].pindex;
+      // stub TODO
+      const pindex = result.rows[i].pindex;
+      const photo_path = builder.build(pindex, 'localhost:8080', 1, 1);
+      photo_paths[i] = photo_path
     }
 
     res.render('index', {
@@ -59,31 +83,21 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/photo/:name/', (req, res) => {
-  // stored photo names
-  const stores = {
-    'first': 1,
-    'second': 2,
-  };
+app.get('/photo/:photoid/', (req, res) => {
+  const pid = req.params.photoid;
+  const builder = new UrlBuilder();
 
-  const pid = stores[req.params.name];
   redis_client.get(pid, (err, result) => {
     if (err) console.log(err);
 
     if (result) {
       console.log('Cache hit');
       res.render('photo', {
-        title: req.params.name,
+        title: 'photo: ' + req.params.photoid,
         photo_path: result,
       });
     } else {
-      const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
-
-      db_client.execute(query, {prepare: true}, (err, result) => {
-        if (err) console.log(err);
-
-        const photo_path = url + result.rows[0].pindex;
-
+      builder.query(pid, (photo_path) => {
         redis_client.setex(pid, 120, photo_path);
         console.log('Cache updated');
 

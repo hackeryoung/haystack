@@ -23,7 +23,7 @@ app.use(responseTime());
 // app.use(express.static('imgs'));
 
 // serve images in /photos/
-app.get('/photo/:photoid', function(req, res) {
+app.get('/:mid/:lvid/:photoid', function(req, res) {
   var photoid = req.params.photoid;
 
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
