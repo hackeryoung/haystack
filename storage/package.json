@@ -1,0 +1,23 @@
+{
+  "name": "haystack_cache",
+  "version": "1.0.0",
+  "description": "Haystack Cache server prototype",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nodejs",
+    "redis"
+  ],
+  "author": "Mingyang Wang",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "response-time": "^2.3.1",
+    "redis": "^2.6.2",
+    "express": "^4.14.0"
+  }
+}
