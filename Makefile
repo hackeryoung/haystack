@@ -15,4 +15,4 @@ clean:
 	# Network
 	docker network rm haystack_network
 	# Remove dangling volumes
-	docker volume rm $$(docker volume ls -q -f dangling=true)
+	docker volume rm `docker volume ls -q -f dangling=true`
