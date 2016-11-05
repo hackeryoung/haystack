@@ -24,8 +24,6 @@ app.use(responseTime());
 app.set('view engine', 'pug');
 
 photo_num = 5;
-url = "http://localhost:8080/photo/"
-
 class UrlBuilder {
   query(pid, resolve) {
     const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
@@ -34,7 +32,8 @@ class UrlBuilder {
         if (err) console.log(err);
 
         const pindx = result.rows[0].pindex;
-        const photo_path = url + pindex;
+        // stub TODO
+        const photo_path = this.build(pindx, 'localhost:8080', 1, 1);
         resolve(photo_path);
       }
     );
@@ -50,6 +49,7 @@ class UrlBuilder {
 
 app.get('/', (req, res) => {
   var num = 3;
+  const builder = new UrlBuilder();
   // randomly generate $num photoids to simulate a dynamic webpage
   // and generate corresponding query
   var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
@@ -63,7 +63,6 @@ app.get('/', (req, res) => {
   query += ' )';
 
   // console.log(query);
-
   db_client.execute(query, ids, {
     prepare: true
   }, function(err, result) {
@@ -71,7 +70,10 @@ app.get('/', (req, res) => {
 
     var photo_paths = new Array(num);
     for (var i = 0; i < num; i++) {
-      photo_paths[i] = url + result.rows[i].pindex;
+      // stub TODO
+      const pindex = result.rows[i].pindex;
+      const photo_path = builder.build(pindex, 'localhost:8080', 1, 1);
+      photo_paths[i] = photo_path
     }
 
     res.render('index', {
