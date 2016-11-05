@@ -44,10 +44,39 @@ class UrlBuilder {
     return xs[Math.floor(Math.random()*xs.length)];
   }
 
+  randomQuery(num, resolve) {
+    // randomly generate $num photoids to simulate a dynamic webpage
+    // and generate corresponding query
+    var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
+      return i + 1;
+    })).slice(0, num);
+    console.log(ids);
+    var query = 'SELECT * FROM photo WHERE pid IN ( ? ';
+    for (var i = 1; i < num; i++) {
+      query += ', ? ';
+    }
+    query += ' )';
+
+    db_client.execute(query, ids, {
+      prepare: true
+    }, (err, result) => {
+      if (err) console.log("Error " + err);
+
+      let photo_paths = new Array(num);
+      for (var i = 0; i < num; i++) {
+        const row = result.rows[i];
+        const mid = this._arrayRandom(row.mid);
+        const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
+        photo_paths[i] = photo_path;
+      }
+
+      resolve(photo_paths);
+    });
+  }
+
   build(pid, cacheUrl, machineId, logicialVolId) {
     // sample: http://localhost:8080/machineId/logicialVolId/pid
     const url = "http://" + [cacheUrl, machineId, logicialVolId, pid].join("/");
-    console.log("Url built: " + url);
     return url;
   }
 }
@@ -55,32 +84,7 @@ class UrlBuilder {
 app.get('/', (req, res) => {
   var num = 3;
   const builder = new UrlBuilder();
-  // randomly generate $num photoids to simulate a dynamic webpage
-  // and generate corresponding query
-  var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
-    return i + 1;
-  })).slice(0, num);
-  console.log(ids);
-  var query = 'SELECT pindex FROM photo WHERE pid IN ( ? ';
-  for (var i = 1; i < num; i++) {
-    query += ', ? ';
-  }
-  query += ' )';
-
-  // console.log(query);
-  db_client.execute(query, ids, {
-    prepare: true
-  }, function(err, result) {
-    if (err) console.log("Error " + err);
-
-    var photo_paths = new Array(num);
-    for (var i = 0; i < num; i++) {
-      // stub TODO
-      const pindex = result.rows[i].pindex;
-      const photo_path = builder.build(pindex, 'localhost:8080', 1, 1);
-      photo_paths[i] = photo_path
-    }
-
+  builder.randomQuery(num, (photo_paths) => {
     res.render('index', {
       title: 'Comic Gallery',
       photo_paths: photo_paths,

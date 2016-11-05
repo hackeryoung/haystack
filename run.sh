@@ -102,8 +102,7 @@ docker run -itd \
 sleep 30 # wait for Cassandra initialization
 docker exec -d $DIRECTORY_CONTAINER cqlsh -f /root/init_table.txt
 
-
-sleep 20 # wait for Cassandra table creation
+sleep 30 # wait for Cassandra table creation
 
 # Create the web front server container
 docker run -itd \

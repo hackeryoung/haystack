@@ -5,7 +5,7 @@ USE photo;
 CREATE TABLE photo (
   pid int primary key,
   cache_url varchar,
-  mid set<int>, 
+  mid set<int>,
   lvid int
  );
 
@@ -24,6 +24,12 @@ VALUES (2, '127.0.0.1:8080', {1,2,3}, 1);
 
 INSERT INTO photo (pid, cache_url, mid, lvid)
 VALUES (3, '127.0.0.1:8080', {4,5}, 1);
+
+INSERT INTO photo (pid, cache_url, mid, lvid)
+VALUES (4, '127.0.0.1:8080', {4,5}, 1);
+
+INSERT INTO photo (pid, cache_url, mid, lvid)
+VALUES (5, '127.0.0.1:8080', {4,5}, 1);
 
 INSERT INTO store (mid, status)
 VALUES (1, 0);
