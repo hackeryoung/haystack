@@ -44,8 +44,9 @@ STORAGE_IP=172.20.0.6
 
 # Set the port
 PROXY_SERVER_PORT=80
-STORAGE_SERVER_PORT=8080 # cache server
-
+CACHE_SERVER_PORT=8080 # cache server
+STORAGE_SERVER_PORT=8081 #storage server
+STORAGE_INTERNAL_PORT=8080 # storage internal port
 
 
 #########################################################################
@@ -90,7 +91,7 @@ docker run -itd \
   --name $CACHE_CONTAINER \
   --network $NETWORK \
   --ip $CACHE_IP \
-  -p $STORAGE_SERVER_PORT:$STORAGE_SERVER_PORT \
+  -p $CACHE_SERVER_PORT:$CACHE_SERVER_PORT \
   -v $LOCAL_CACHE_DIR/imgs:/root/app/imgs \
   $CACHE_IMAGE
 
@@ -131,4 +132,5 @@ docker run -itd \
   --name $STORAGE_CONTAINER \
   --network $NETWORK \
   --ip $STORAGE_IP \
+  -p $STORAGE_SERVER_PORT:$STORAGE_INTERNAL_PORT \
   $STORAGE_IMAGE
