@@ -23,9 +23,14 @@ app.use(responseTime());
 // app.use(express.static('imgs'));
 
 // serve images in /photos/
-app.get('/:mid/:lvid/:photoid', function(req, res) {
-  var photoid = req.params.photoid;
-
+app.get('/:mid/:lvid/:pid', function(req, res) {
+  // TODO remove hard code
+  const hmap = {
+    1: '001',
+    2: '002',
+    3: '003',
+  }
+  var photoid = hmap[req.params.pid];
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
 
   // check redis cache first; if no hit, read from disk and cache it in readis
