@@ -26,17 +26,22 @@ app.set('view engine', 'pug');
 photo_num = 5;
 class UrlBuilder {
   query(pid, resolve) {
-    const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
+    const query = 'SELECT * FROM photo WHERE pid = ' + pid;
     // no promise support for cassandra client
     db_client.execute(query, {prepare: true}, (err, result) => {
         if (err) console.log(err);
 
-        const pindx = result.rows[0].pindex;
-        // stub TODO
-        const photo_path = this.build(pindx, 'localhost:8080', 1, 1);
+        const row = result.rows[0];
+        // driver exposes list/set as native Arrays
+        const mid = this._arrayRandom(row.mid);
+        const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         resolve(photo_path);
       }
     );
+  }
+
+  _arrayRandom(xs) {
+    return xs[Math.floor(Math.random()*xs.length)];
   }
 
   build(pid, cacheUrl, machineId, logicialVolId) {
