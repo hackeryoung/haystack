@@ -26,6 +26,28 @@ app.set('view engine', 'pug');
 photo_num = 5;
 url = "http://localhost:8080/photo/"
 
+class UrlBuilder {
+  query(pid, resolve) {
+    const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
+    // no promise support for cassandra client
+    db_client.execute(query, {prepare: true}, (err, result) => {
+        if (err) console.log(err);
+
+        const pindx = result.rows[0].pindex;
+        const photo_path = url + pindex;
+        resolve(photo_path);
+      }
+    );
+  }
+
+  build(pid, cacheUrl, machineId, logicialVolId) {
+    // sample: http://localhost:8080/machineId/logicialVolId/pid
+    const url = "http://" + [cacheUrl, machineId, logicialVolId, pid].join("/");
+    console.log("Url built: " + url);
+    return url;
+  }
+}
+
 app.get('/', (req, res) => {
   var num = 3;
   // randomly generate $num photoids to simulate a dynamic webpage
@@ -59,31 +81,21 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/photo/:name/', (req, res) => {
-  // stored photo names
-  const stores = {
-    'first': 1,
-    'second': 2,
-  };
+app.get('/photo/:photoid/', (req, res) => {
+  const pid = req.params.photoid;
+  const builder = new UrlBuilder();
 
-  const pid = stores[req.params.name];
   redis_client.get(pid, (err, result) => {
     if (err) console.log(err);
 
     if (result) {
       console.log('Cache hit');
       res.render('photo', {
-        title: req.params.name,
+        title: 'photo: ' + req.params.photoid,
         photo_path: result,
       });
     } else {
-      const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
-
-      db_client.execute(query, {prepare: true}, (err, result) => {
-        if (err) console.log(err);
-
-        const photo_path = url + result.rows[0].pindex;
-
+      builder.query(pid, (photo_path) => {
         redis_client.setex(pid, 120, photo_path);
         console.log('Cache updated');
 
