@@ -2,7 +2,7 @@ FROM node:7.0.0
 MAINTAINER Kun Huang <kuh004@ucsd.edu>, Junbo Ke <juke@ucsd.edu>
 
 # Install necessary dependencies and tools
-RUN apt-get update
+RUN apt-get update && apt-get install -y redis-server
 RUN npm install filepointer
 
 # Create app directory
