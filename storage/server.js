@@ -2,6 +2,7 @@
 const express = require('express');
 const app = express();
 const responseTime = require('response-time');
+const redis = require('redis');
 const fs = require('fs');
 
 // set the server listening port
