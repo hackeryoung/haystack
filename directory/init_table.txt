@@ -1,10 +1,32 @@
-create keyspace photo with replication = {'class':'SimpleStrategy','replication_factor':1};
+CREATE KEYSPACE photo with replication = {'class':'SimpleStrategy','replication_factor':1};
 
-use photo;
-create table photo (pid int primary key, pindex varchar);
+USE photo;
 
-insert into photo (pid, pindex) values ( 1, '001');
-insert into photo (pid, pindex) values ( 2, '002');
-insert into photo (pid, pindex) values ( 3, '003');
-insert into photo (pid, pindex) values ( 4, '004');
-insert into photo (pid, pindex) values ( 5, '005');
+CREATE TABLE photo (
+  pid int primary key,
+  cache_url varchar,
+  mid set<int>, 
+  lvid int
+ );
+
+// status: 0 - only readable, 1 - writable
+CREATE TABLE store (
+  mid int primary key,
+  status int
+);
+
+
+INSERT INTO photo (pid, cache_url, mid, lvid)
+VALUES (1, '127.0.0.1:8080', {1}, 1);
+
+INSERT INTO photo (pid, cache_url, mid, lvid)
+VALUES (2, '127.0.0.1:8080', {1,2,3}, 1);
+
+INSERT INTO photo (pid, cache_url, mid, lvid)
+VALUES (3, '127.0.0.1:8080', {4,5}, 1);
+
+INSERT INTO store (mid, status)
+VALUES (1, 0);
+
+INSERT INTO store (mid, status)
+VALUES (2, 1);
