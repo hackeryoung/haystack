@@ -6,6 +6,7 @@ PROXY_IMAGE=hyoung/haystack_proxy
 WEBFRONT_IMAGE=hyoung/haystack_webfront
 DIRECTORY_IMAGE=hyoung/haystack_directory
 CACHE_IMAGE=hyoung/haystack_cache
+STORAGE_IMAGE=hyoung/haystack_storage
 # DATA_IMAGE=hyoung/haystack_data
 
 # Set the names of the Docker containers for corresponding images
@@ -13,6 +14,7 @@ PROXY_CONTAINER=h_proxy
 WEBFRONT_CONTAINER=h_webfront
 DIRECTORY_CONTAINER=h_directory
 CACHE_CONTAINER=h_cache
+STORAGE_CONTAINER=h_storage
 # DATA_CONTAINER=h_data
 
 # Set the name of the bridge network
@@ -23,6 +25,7 @@ LOCAL_PROXY_DIR=$(pwd)'/proxy'
 LOCAL_WEBFRONT_DIR=$(pwd)'/webfront'
 LOCAL_DIRECTORY_DIR=$(pwd)'/directory'
 LOCAL_CACHE_DIR=$(pwd)'/cache'
+LOCAL_STORAGE_DIR=$(pwd)'/storage'
 # LOCAL_DATA_DIR=$(pwd)'/data'
 
 # Set the ip4 address for each component
@@ -32,6 +35,7 @@ PROXY_IP=172.20.0.2
 WEBFRONT_IP=172.20.0.3
 DIRECTORY_IP=172.20.0.4
 CACHE_IP=172.20.0.5
+STORAGE_IP=172.20.0.6
 
 
 # Set the image directories
@@ -55,6 +59,7 @@ docker build -t $PROXY_IMAGE $LOCAL_PROXY_DIR
 docker build -t $WEBFRONT_IMAGE $LOCAL_WEBFRONT_DIR
 docker build -t $DIRECTORY_IMAGE $LOCAL_DIRECTORY_DIR
 docker build -t $CACHE_IMAGE $LOCAL_CACHE_DIR
+docker build -t $STORAGE_IMAGE $LOCAL_STORAGE_DIR
 # Build the data volume container Image
 # docker build -t $DATA_IMAGE $LOCAL_DATA_DIR
 
@@ -120,3 +125,10 @@ docker run -itd \
   --ip $PROXY_IP \
   -p $PROXY_SERVER_PORT:$PROXY_SERVER_PORT \
   $PROXY_IMAGE
+
+# Create the storage container
+docker run -itd \
+  --name $STORAGE_CONTAINER \
+  --network $NETWORK \
+  --ip $STORAGE_IP \
+  $STORAGE_IMAGE
