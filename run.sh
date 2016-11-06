@@ -6,6 +6,7 @@ PROXY_IMAGE=hyoung/haystack_proxy
 WEBFRONT_IMAGE=hyoung/haystack_webfront
 DIRECTORY_IMAGE=hyoung/haystack_directory
 CACHE_IMAGE=hyoung/haystack_cache
+STORAGE_IMAGE=hyoung/haystack_storage
 # DATA_IMAGE=hyoung/haystack_data
 
 # Set the names of the Docker containers for corresponding images
@@ -13,6 +14,7 @@ PROXY_CONTAINER=h_proxy
 WEBFRONT_CONTAINER=h_webfront
 DIRECTORY_CONTAINER=h_directory
 CACHE_CONTAINER=h_cache
+STORAGE_CONTAINER=h_storage
 # DATA_CONTAINER=h_data
 
 # Set the name of the bridge network
@@ -23,6 +25,7 @@ LOCAL_PROXY_DIR=$(pwd)'/proxy'
 LOCAL_WEBFRONT_DIR=$(pwd)'/webfront'
 LOCAL_DIRECTORY_DIR=$(pwd)'/directory'
 LOCAL_CACHE_DIR=$(pwd)'/cache'
+LOCAL_STORAGE_DIR=$(pwd)'/storage'
 # LOCAL_DATA_DIR=$(pwd)'/data'
 
 # Set the ip4 address for each component
@@ -32,6 +35,7 @@ PROXY_IP=172.20.0.2
 WEBFRONT_IP=172.20.0.3
 DIRECTORY_IP=172.20.0.4
 CACHE_IP=172.20.0.5
+STORAGE_IP=172.20.0.6
 
 
 # Set the image directories
@@ -40,8 +44,9 @@ CACHE_IP=172.20.0.5
 
 # Set the port
 PROXY_SERVER_PORT=80
-STORAGE_SERVER_PORT=8080 # cache server
-
+CACHE_SERVER_PORT=8080 # cache server
+STORAGE_SERVER_PORT=8081 #storage server
+STORAGE_INTERNAL_PORT=8080 # storage internal port
 
 
 #########################################################################
@@ -55,6 +60,7 @@ docker build -t $PROXY_IMAGE $LOCAL_PROXY_DIR
 docker build -t $WEBFRONT_IMAGE $LOCAL_WEBFRONT_DIR
 docker build -t $DIRECTORY_IMAGE $LOCAL_DIRECTORY_DIR
 docker build -t $CACHE_IMAGE $LOCAL_CACHE_DIR
+docker build -t $STORAGE_IMAGE $LOCAL_STORAGE_DIR
 # Build the data volume container Image
 # docker build -t $DATA_IMAGE $LOCAL_DATA_DIR
 
@@ -85,7 +91,7 @@ docker run -itd \
   --name $CACHE_CONTAINER \
   --network $NETWORK \
   --ip $CACHE_IP \
-  -p $STORAGE_SERVER_PORT:$STORAGE_SERVER_PORT \
+  -p $CACHE_SERVER_PORT:$CACHE_SERVER_PORT \
   -v $LOCAL_CACHE_DIR/imgs:/root/app/imgs \
   $CACHE_IMAGE
 
@@ -102,8 +108,7 @@ docker run -itd \
 sleep 30 # wait for Cassandra initialization
 docker exec -d $DIRECTORY_CONTAINER cqlsh -f /root/init_table.txt
 
-
-sleep 20 # wait for Cassandra table creation
+sleep 30 # wait for Cassandra table creation
 
 # Create the web front server container
 docker run -itd \
@@ -120,3 +125,11 @@ docker run -itd \
   --ip $PROXY_IP \
   -p $PROXY_SERVER_PORT:$PROXY_SERVER_PORT \
   $PROXY_IMAGE
+
+# Create the storage container
+docker run -itd \
+  --name $STORAGE_CONTAINER \
+  --network $NETWORK \
+  --ip $STORAGE_IP \
+  -p $STORAGE_SERVER_PORT:$STORAGE_INTERNAL_PORT \
+  $STORAGE_IMAGE

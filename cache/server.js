@@ -37,6 +37,8 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
     1: '001',
     2: '002',
     3: '003',
+    4: '004',
+    5: '005',
   }
   var photoid = hmap[req.params.pid];
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');

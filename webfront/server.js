@@ -16,6 +16,10 @@ db_client.connect(function(err) {
 });
 
 
+const multer  = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const fs = require('fs');
+
 app.set('port', (process.env.PORT || 80));
 
 // set up the response-time middleware
@@ -23,26 +27,59 @@ app.use(responseTime());
 
 app.set('view engine', 'pug');
 
-photo_num = 5;
 class UrlBuilder {
   query(pid, resolve) {
-    const query = 'SELECT pindex FROM photo WHERE pid = ' + pid;
+    const query = 'SELECT * FROM photo WHERE pid = ' + pid;
     // no promise support for cassandra client
     db_client.execute(query, {prepare: true}, (err, result) => {
         if (err) console.log(err);
 
-        const pindx = result.rows[0].pindex;
-        // stub TODO
-        const photo_path = this.build(pindx, 'localhost:8080', 1, 1);
+        const row = result.rows[0];
+        // driver exposes list/set as native Arrays
+        const mid = this._arrayRandom(row.mid);
+        const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         resolve(photo_path);
       }
     );
   }
 
+  _arrayRandom(xs) {
+    return xs[Math.floor(Math.random()*xs.length)];
+  }
+
+  randomQuery(num, resolve) {
+    const photo_num = 5;
+    // randomly generate $num photoids to simulate a dynamic webpage
+    // and generate corresponding query
+    var ids = shuffle(Array.apply(null, Array(photo_num)).map(function(_, i) {
+      return i + 1;
+    })).slice(0, num);
+    var query = 'SELECT * FROM photo WHERE pid IN ( ? ';
+    for (var i = 1; i < num; i++) {
+      query += ', ? ';
+    }
+    query += ' )';
+
+    db_client.execute(query, ids, {
+      prepare: true
+    }, (err, result) => {
+      if (err) console.log("Error " + err);
+
+      let photo_paths = new Array(num);
+      for (var i = 0; i < num; i++) {
+        const row = result.rows[i];
+        const mid = this._arrayRandom(row.mid);
+        const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
+        photo_paths[i] = photo_path;
+      }
+
+      resolve(photo_paths);
+    });
+  }
+
   build(pid, cacheUrl, machineId, logicialVolId) {
     // sample: http://localhost:8080/machineId/logicialVolId/pid
     const url = "http://" + [cacheUrl, machineId, logicialVolId, pid].join("/");
-    console.log("Url built: " + url);
     return url;
   }
 }
@@ -50,32 +87,7 @@ class UrlBuilder {
 app.get('/', (req, res) => {
   var num = 3;
   const builder = new UrlBuilder();
-  // randomly generate $num photoids to simulate a dynamic webpage
-  // and generate corresponding query
-  var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
-    return i + 1;
-  })).slice(0, num);
-  console.log(ids);
-  var query = 'SELECT pindex FROM photo WHERE pid IN ( ? ';
-  for (var i = 1; i < num; i++) {
-    query += ', ? ';
-  }
-  query += ' )';
-
-  // console.log(query);
-  db_client.execute(query, ids, {
-    prepare: true
-  }, function(err, result) {
-    if (err) console.log("Error " + err);
-
-    var photo_paths = new Array(num);
-    for (var i = 0; i < num; i++) {
-      // stub TODO
-      const pindex = result.rows[i].pindex;
-      const photo_path = builder.build(pindex, 'localhost:8080', 1, 1);
-      photo_paths[i] = photo_path
-    }
-
+  builder.randomQuery(num, (photo_paths) => {
     res.render('index', {
       title: 'Comic Gallery',
       photo_paths: photo_paths,
@@ -83,7 +95,20 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/photo/:photoid/', (req, res) => {
+app.get('/photo/', (req, res) => {
+  // TODO, front end for uploading photo
+  res.send("GET");
+});
+
+app.post('/photo/', upload.single('image'), (req, res) => {
+  fs.readFile(req.file.path, (err, data) => {
+    let image = new Buffer(data).toString('base64');
+    // TODO handle image base64;
+    res.end('uploaded');
+  });
+});
+
+app.get('/photo/:photoid', (req, res) => {
   const pid = req.params.photoid;
   const builder = new UrlBuilder();
 
