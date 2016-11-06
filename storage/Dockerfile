@@ -9,7 +9,6 @@ RUN npm install filepointer
 RUN mkdir -p /root/app
 WORKDIR /root/app
 
-
 # Install app dependences
 COPY package.json /root/app
 RUN npm install
@@ -17,6 +16,11 @@ RUN npm install
 # Bundle app source
 COPY server.js /root/app
 COPY start_service.sh /root/app
+
+# Create data directory
+RUN mkdir -p /root/data
+COPY volumes/ /root/data/
+
 
 # Bind to local port 8080
 EXPOSE 8080
