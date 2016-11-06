@@ -4,6 +4,8 @@ const app = express();
 const responseTime = require('response-time');
 const redis = require('redis');
 const fs = require('fs');
+Stream = require('stream').Transform
+
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
@@ -41,6 +43,9 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
     5: '005',
   }
   var photoid = hmap[req.params.pid];
+  var pid = req.params.pid
+  var mid = req.params.mid
+  var lvid = req.params.lvid
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
 
   // check redis cache first; if no hit, read from disk and cache it in readis
@@ -53,49 +58,40 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
         'source': 'redis'
       });
     } else {
-      // Old Code:
-      var photo_path = __dirname + '/imgs/phd_' + photoid + '.gif';
-      fs.readFile(photo_path, function(err, data) {
-        if (err) console.log("Error " + err);
-        res.setHeader('Content-Type', 'image/gif');
-        res.end(data);
-        console.log((new Date()).toTimeString(), {
-          'source': 'dfs'
-        });
+      // Not found in Redis, query from Haystack Store.
+      // Get the host IP from Redis.
+      client.get(['machine', mid].join('_'), function(error, ip) {
+        if(ip) {
+          // Found the IP of the machine
+          var params = {host: ip.toString(), 
+                        path: '/'+[lvid, pid].join('/'),
+                        port: 8080};
 
-        // set a 120 sec expiration time
-        client.setex(photoid, 120, new Buffer(data).toString('base64'));        
+          http.request(params, function(response) {
+            var data = new Stream();
+
+            response.on('data', function(chunk) {
+              data.push(chunk);
+            });
+
+            response.on('end', function() {
+              var dataBuffer = data.read()
+              res.setHeader('Content-Type', 'image/gif');
+              res.end(new Buffer(dataBuffer, 'base64'));
+              console.log((new Date()).toTimeString(), {
+                'source': 'Haystack Store'
+              });
+
+              // Cache the image in the Redis.
+              client.setex(photoid, 120, new Buffer(dataBuffer).toString('base64'));
+            });
+          }).end();
+
+        } else {
+          // IP of the machine not found.
+          console.log("Cannot find the IP of machine " + mid +' '+  + err);
+        }
       });
-
-      // New Code:
-
-      // // Not found in Redis, query from Haystack Store.
-      // // Get the host IP from Redis.
-      // client.get(['machine', mid].join('_'), function(error, ip) {
-      //   if(ip) {
-      //     // Got the IP of the machine
-      //     var params = {host: ip.toString(), path: '/'+[lvid, pid].join('/')};
-
-      //     http.request(params, function(response) {
-      //       var data = new Stream();
-      //       response.on('data', function(chunk) {
-      //         data.push(chunk);
-      //       });
-      //       response.on('end', function() {
-      //         res.setHeader('Content-Type', 'image/gif');
-      //         res.end(new Buffer(data.read(), 'base64'));
-      //         console.log((new Data()).toTimeString(), {
-      //           'source': 'Haystack Store'
-      //         });
-
-      //         client.setex(photoid, 120, new Buffer(data.read()).toString('base64'));
-      //       });
-      //     }).end();
-
-      //   } else {
-      //     console.log("Cannot find the IP of machine " + mid +' '+  + err);
-      //   }
-      // });
     }
   });
 });

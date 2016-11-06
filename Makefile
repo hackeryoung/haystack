@@ -16,3 +16,15 @@ clean:
 	docker network rm haystack_network
 	# Remove dangling volumes
 	docker volume rm `docker volume ls -q -f dangling=true`
+
+scr:
+	# Stop
+	docker stop h_directory h_proxy h_webfront h_cache h_storage
+	# Clean
+	docker rm h_directory h_proxy h_webfront h_cache h_storage
+	docker network rm haystack_network
+	docker volume rm `docker volume ls -q -f dangling=true`
+	# Run
+	sh run.sh
+
+
