@@ -8,10 +8,18 @@ const fs = require('fs');
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
 
+// Create http object to communicate with Haystack Store
+var http = require('http');
+
+
 // if an error occurs, print it to the console
 client.on('error', function(err) {
   console.log("Error " + err);
 });
+
+// Hardcode the map from machine id to ip.
+client.set('machine_0', '172.20.0.6');
+
 
 // set the server listening port
 app.set('port', (process.env.PORT || 8080));
@@ -36,12 +44,14 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
   // check redis cache first; if no hit, read from disk and cache it in readis
   client.get(photoid, function(error, result) {
     if (result) {
+      // Found in Redis, just construct the response.
       res.setHeader('Content-Type', 'image/gif');
       res.end(new Buffer(result, 'base64'));
       console.log((new Date()).toTimeString(), {
         'source': 'redis'
       });
     } else {
+      // Old Code:
       var photo_path = __dirname + '/imgs/phd_' + photoid + '.gif';
       fs.readFile(photo_path, function(err, data) {
         if (err) console.log("Error " + err);
@@ -52,8 +62,38 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
         });
 
         // set a 120 sec expiration time
-        client.setex(photoid, 120, new Buffer(data).toString('base64'));
+        client.setex(photoid, 120, new Buffer(data).toString('base64'));        
       });
+
+      // New Code:
+
+      // // Not found in Redis, query from Haystack Store.
+      // // Get the host IP from Redis.
+      // client.get(['machine', mid].join('_'), function(error, ip) {
+      //   if(ip) {
+      //     // Got the IP of the machine
+      //     var params = {host: ip.toString(), path: '/'+[lvid, pid].join('/')};
+
+      //     http.request(params, function(response) {
+      //       var data = new Stream();
+      //       response.on('data', function(chunk) {
+      //         data.push(chunk);
+      //       });
+      //       response.on('end', function() {
+      //         res.setHeader('Content-Type', 'image/gif');
+      //         res.end(new Buffer(data.read(), 'base64'));
+      //         console.log((new Data()).toTimeString(), {
+      //           'source': 'Haystack Store'
+      //         });
+
+      //         client.setex(photoid, 120, new Buffer(data.read()).toString('base64'));
+      //       });
+      //     }).end();
+
+      //   } else {
+      //     console.log("Cannot find the IP of machine " + mid +' '+  + err);
+      //   }
+      // });
     }
   });
 });
