@@ -97,7 +97,7 @@ app.get('/', (req, res) => {
 
 app.get('/photo/', (req, res) => {
   // TODO, front end for uploading photo
-  res.send("GET");
+  res.render('upload', { title: "Upload Photo" });
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
