@@ -120,26 +120,26 @@ Responsibilities
 #### Haystack Directory - Cassandra
 Responsibilities
 
-* maintain the photo information in database
-	* in the prototype, there is a simple table `photo` in keyspace `photo` with schema
+* maintain photo information in database: table `photo` in keyspace `photo` with schema
+		
+		(pid INT PRIMARY KEY, cachr_url VARSTR, mid SET<INT>, lvid INT)
+* maintain logical volume mapping in database: table `store` in keyspace `photo` with schema
 
-		```
-		(pid INT PRIMARY KEY, pindex VARSTR)
-		```
-* accept query for photo information
+		(livd INT PRIMARY KEY, mid SET<INT>, status INT)
+	Here, `status` field has two possible values, 0 for readably-only and 1 for writable.
 
 **TODOs**
 
-* ★★★ redesign photo table schema such as
+* ~~★★★ redesign photo table schema such as~~
 
 		(pid INT PRIMARY KEY, logical_volume_id INT)
-* ★★ design a Store machine mapping table schema such as
+* ~~★★ design a Store machine mapping table schema such as~~
 
 		(logical_volume_id INT PRIMARY KEY, Store_machine_id INT)
-* ★★ design a Store machine status table schema such as
+* ~~★★ design a Store machine status table schema such as~~
 
 		(Store_machine_id INT PRIMARY KEY, writable_flag INT)
-* ★ accept query for writable Store machine
+* ~~★ accept query for writable Store machine~~
 
 
 

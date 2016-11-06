@@ -20,6 +20,11 @@ const multer  = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const fs = require('fs');
 
+
+// TODO: pids management
+var photo_num = 5;
+
+
 app.set('port', (process.env.PORT || 80));
 
 // set up the response-time middleware
@@ -48,7 +53,6 @@ class UrlBuilder {
   }
 
   randomQuery(num, resolve) {
-    const photo_num = 5;
     // randomly generate $num photoids to simulate a dynamic webpage
     // and generate corresponding query
     var ids = shuffle(Array.apply(null, Array(photo_num)).map(function(_, i) {
@@ -100,11 +104,31 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  console.log(req);
+  // console.log(req);
   fs.readFile(req.file.path, (err, data) => {
     let image = new Buffer(data).toString('base64');
     // TODO handle image base64;
     res.end('uploaded');
+
+    // assign a pid
+    var pid = (++photo_num);
+
+    // ask Directory for writable logical volumns
+    var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
+    db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
+      if (err) console.log("Error " + err);
+
+      let entry = result.rows[ Math.floor(Math.random() * result.rows.length) ];
+      let lvid = entry.lvid;
+      let mid = entry.mid;
+
+      var insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);"
+      db_client.execute(insert_query, [pid, mid, lvid], { prepare: true}, (err) => {
+        if (err) console.log("Error " + err);
+      });
+
+      // TODO: contact Cache for storing
+    });
   });
 });
 
