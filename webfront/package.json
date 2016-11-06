@@ -18,6 +18,7 @@
     "redis": "^2.6.2",
     "pug": "^2.0.0-beta6",
     "cassandra-driver": "^3.1.5",
-    "shuffle-array": "^1.0.0"
+    "shuffle-array": "^1.0.0",
+    "multer": "^1.2.0"
   }
 }

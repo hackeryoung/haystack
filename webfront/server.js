@@ -16,6 +16,10 @@ db_client.connect(function(err) {
 });
 
 
+const multer  = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const fs = require('fs');
+
 app.set('port', (process.env.PORT || 80));
 
 // set up the response-time middleware
@@ -23,7 +27,6 @@ app.use(responseTime());
 
 app.set('view engine', 'pug');
 
-photo_num = 5;
 class UrlBuilder {
   query(pid, resolve) {
     const query = 'SELECT * FROM photo WHERE pid = ' + pid;
@@ -45,12 +48,12 @@ class UrlBuilder {
   }
 
   randomQuery(num, resolve) {
+    const photo_num = 5;
     // randomly generate $num photoids to simulate a dynamic webpage
     // and generate corresponding query
-    var ids = shuffle(Array.apply(null, Array(5)).map(function(_, i) {
+    var ids = shuffle(Array.apply(null, Array(photo_num)).map(function(_, i) {
       return i + 1;
     })).slice(0, num);
-    console.log(ids);
     var query = 'SELECT * FROM photo WHERE pid IN ( ? ';
     for (var i = 1; i < num; i++) {
       query += ', ? ';
@@ -92,7 +95,20 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/photo/:photoid/', (req, res) => {
+app.get('/photo/', (req, res) => {
+  // TODO, front end for uploading photo
+  res.send("GET");
+});
+
+app.post('/photo/', upload.single('image'), (req, res) => {
+  fs.readFile(req.file.path, (err, data) => {
+    let image = new Buffer(data).toString('base64');
+    // TODO handle image base64;
+    res.end('uploaded');
+  });
+});
+
+app.get('/photo/:photoid', (req, res) => {
   const pid = req.params.photoid;
   const builder = new UrlBuilder();
 
