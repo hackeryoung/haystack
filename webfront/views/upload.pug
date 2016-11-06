@@ -2,6 +2,9 @@ html
   head
     title= title
   body
-    form(method= "post" enctype= "multipart/form-data")
-      input(type= "file")
-      button(type= "submit")= "upload"
+    form(method="post" enctype="multipart/form-data" action="/photo/" id="file-form")
+      input(type="file" id="file-select")
+      button(type="submit" id="upload-button")="upload"
+
+    script
+      include upload.js

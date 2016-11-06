@@ -11,7 +11,8 @@ CREATE TABLE photo (
 
 // status: 0 - only readable, 1 - writable
 CREATE TABLE store (
-  mid int primary key,
+  lvid int primary key,
+  mid set<int>,
   status int
 );
 
@@ -31,7 +32,7 @@ VALUES (4, '127.0.0.1:8080', {4,5}, 1);
 INSERT INTO photo (pid, cache_url, mid, lvid)
 VALUES (5, '127.0.0.1:8080', {4,5}, 1);
 
-INSERT INTO store (mid, status)
+INSERT INTO store (lvid, status)
 VALUES (1, 0);
 
 INSERT INTO store (mid, status)

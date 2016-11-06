@@ -95,12 +95,12 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/photo/', (req, res) => {
-  // TODO, front end for uploading photo
+app.get('/upload/', (req, res) => {
   res.render('upload', { title: "Upload Photo" });
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
+  console.log(req);
   fs.readFile(req.file.path, (err, data) => {
     let image = new Buffer(data).toString('base64');
     // TODO handle image base64;

@@ -18,6 +18,12 @@ sh run.sh
 
 After everything is up and running, you should be able to see the 'dynamic' webpage via visiting `localhost` or `0.0.0.0` on your browser.
 
+### View Photos
+If the system is running locally, you can view the photos in the main page, that is, `http://0.0.0.0`, in which you will see three random photos. Besides, you can preview individual photo via `http://0.0.0.0/photo/pid`, in which `pid` should be replaced by a number from 1 to 5.
+
+### Upload Photos
+If the system is running locally, you can upload an image via `http://0.0.0.0/upload/`.
+
 ### Stop Containers
 
 ```
@@ -159,3 +165,5 @@ Responsibilities
 	* design metadata
 	* design file needle
 	* design file read/write operation by filename, offset, and size
+
+
