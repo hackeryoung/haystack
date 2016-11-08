@@ -64,6 +64,26 @@ there are some tricky issues. The fact is that setting up the Cassandra server i
 
 [Live Demo](http://playground.hyoung.me/)
 
+## Prototype Performance
+With Chrome Developer Tools and `response-time` package in Node.js server, we could analyze the performance of our [prototype](http://playground.hyoung.me/). At the beginning, nothing is in cache and the webpage response time is shown below
+<img src="./doc/imgs/case1.png " style="width: 400px;" align="center"/>
+
+And we could also record response time of fetching image `001` at the image server, eliminating network transmission influences, as shown below in the header `X-Response-Time`
+<img src="./doc/imgs/case1_detail.png " style="width: 400px;" align="center"/>
+
+After this request, the image `001` has been cached successfully. Now, we refresh the page and make another request for the image `001`. The webpage response time is shown below
+<img src="./doc/imgs/case2.png " style="width: 400px;" align="center"/>
+
+And the image fetching time is
+<img src="./doc/imgs/case2_detail.png " style="width: 400px;" align="center"/>
+
+From these two examples, we could observe that caching does offer some performance boosting. However, this result might be kind of deceiving. After taking more trials, we find out there is a large variance in the response time, due to some factors such as CPU utilization rate, file system cache, and so on.
+
+### Refs
+- [response-time](https://www.npmjs.com/package/response-time)
+
+
+
 ## Description
 ### Conceptual Workflow
 1. when a client visits the website, the request first hits the reverse proxy server
