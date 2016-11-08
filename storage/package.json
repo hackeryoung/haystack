@@ -16,6 +16,7 @@
     "express": "^4.14.0",
     "filepointer": "0.0.91",
     "redis": "^2.6.2",
-    "response-time": "^2.3.1"
+    "response-time": "^2.3.1",
+    "multer": "1.1.0"
   }
 }

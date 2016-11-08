@@ -5,6 +5,8 @@ const responseTime = require('response-time');
 const redis = require('redis');
 const fs = require('fs');
 const filePointer = require("filepointer");
+const multer  = require('multer');
+const upload = multer({ dest: 'uploads/' }).single('image');
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
@@ -35,7 +37,7 @@ app.get('/:lvid/:photoid', function(req, res) {
     if (err){
       // TODO: handle error
       console.log('error');
-      res.send('something is wrong')
+      res.send('something is wrong');
     } else {
       console.log(reply);
       var offset = parseInt(reply[0]);
@@ -54,7 +56,44 @@ app.get('/:lvid/:photoid', function(req, res) {
 });
 
 // WRITE request
-// TODO
+app.post('/:lvid/:photoid/:type', function(req, res) {
+  var lvid = req.params.lvid;
+  var photoid = req.params.photoid;
+  var type = req.params.type;
+
+  console.log('Received WRITE request:');
+  console.log('logical volumn id: '+lvid);
+  console.log('photo id: '+photoid);
+  console.log('photo type: '+type);
+
+  upload(req,res,function(err) {
+    if(err) {
+        return res.end("Error uploading file.");
+    }
+    fs.readFile(req.file.path, (err, data) => {
+      // How to make it as base64
+      // var image = new Buffer(data).toString('base64');
+      
+      var image = new Buffer(data);
+      var size = image.length;
+      var offset = fs.statSync("/root/data/"+lvid)['size'];
+      
+      fs.appendFile("/root/data/"+lvid, image, function(err){
+        if (err){
+          // TODO: handle error
+          console.log('something is wrong: '+err);
+          res.send('something is wrong');
+          process.exit(1);
+        } else {
+          client.rpush([photoid, offset, size, type]);
+          res.send("OK");
+        }
+      });
+    });
+
+  });
+
+});
 
 // DELETE request
 // TODO
