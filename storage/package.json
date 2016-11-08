@@ -18,6 +18,7 @@
   "dependencies": {
     "response-time": "^2.3.1",
     "redis": "^2.6.2",
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "multer": "1.1.0"
   }
 }
