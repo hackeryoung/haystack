@@ -10,7 +10,7 @@ const filePointer = require("filepointer");
 var client = redis.createClient();
 
 // Set key value pair: [photoid, [offset, size, type]]
-client.rpush(['1', '0', '82931', 'gif'])
+client.rpush(['1', '0', '82931', 'gif']);
 
 // set the server listening port
 app.set('port', (process.env.PORT || 8080));
@@ -24,7 +24,7 @@ app.get('/', function (req, res) {
 
 // READ request
 app.get('/:lvid/:photoid', function(req, res) {
-  var lvid = req.params.lvid
+  var lvid = req.params.lvid;
   var photoid = req.params.photoid;
 
   console.log('Received READ request:');
@@ -42,7 +42,7 @@ app.get('/:lvid/:photoid', function(req, res) {
       var size = parseInt(reply[1]);
       var type = reply[2];
 
-      var logicalVolume = fs.readFileSync("/root/data/"+lvid)
+      var logicalVolume = fs.readFileSync("/root/data/"+lvid);
       
       var fp = new filePointer(logicalVolume);
       var buffer = fp.copy_abs(offset, offset+size);

@@ -4,7 +4,7 @@
   "description": "Haystack Cache server prototype",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [
     "nodejs",
@@ -12,12 +12,10 @@
   ],
   "author": "Mingyang Wang",
   "license": "MIT",
-  "scripts": {
-    "start": "node server.js"
-  },
   "dependencies": {
-    "response-time": "^2.3.1",
+    "express": "^4.14.0",
+    "filepointer": "0.0.91",
     "redis": "^2.6.2",
-    "express": "^4.14.0"
+    "response-time": "^2.3.1"
   }
 }

@@ -4,7 +4,7 @@ const app = express();
 const responseTime = require('response-time');
 const redis = require('redis');
 const fs = require('fs');
-Stream = require('stream').Transform
+Stream = require('stream').Transform;
 
 
 // create a new redis client and connect to our local redis instance
@@ -41,11 +41,11 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
     3: '003',
     4: '004',
     5: '005',
-  }
+  };
   var photoid = hmap[req.params.pid];
-  var pid = req.params.pid
-  var mid = req.params.mid
-  var lvid = req.params.lvid
+  var pid = req.params.pid;
+  var mid = req.params.mid;
+  var lvid = req.params.lvid;
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
 
   // check redis cache first; if no hit, read from disk and cache it in readis
@@ -75,7 +75,7 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
             });
 
             response.on('end', function() {
-              var dataBuffer = data.read()
+              var dataBuffer = data.read();
               res.setHeader('Content-Type', 'image/gif');
               res.end(new Buffer(dataBuffer, 'base64'));
               console.log((new Date()).toTimeString(), {
