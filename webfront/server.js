@@ -82,8 +82,9 @@ class UrlBuilder {
   }
 
   build(pid, cacheUrl, machineId, logicialVolId) {
-    // sample: http://localhost:8080/machineId/logicialVolId/pid
-    const url = "http://" + [cacheUrl, machineId, logicialVolId, pid].join("/");
+    // sample: http://localhost:8080/machineIdBase64/logicialVolId/pid
+    const machineIdBase64 = new Buffer(machineId).toString('base64');
+    const url = "http://" + [cacheUrl, machineIdBase64, logicialVolId, pid].join("/");
     return url;
   }
 }
