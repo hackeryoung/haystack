@@ -9,12 +9,14 @@ URL: `http://<Cache>/<Machine id>/<Logical volume, Photo>`
 
 URL: `http://<machine_ip>/upload/`
 
-data 
+Data:
 ```
 lvid: <lvid>
 pid: <pid>
 file: image binary as it is 
 ```
+
+[Transfer binary file over HTTP](http://stackoverflow.com/questions/1509743/what-is-a-good-way-to-transfer-binary-data-to-a-http-rest-api-service)
 
 
 ### Read
