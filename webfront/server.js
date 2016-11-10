@@ -1,5 +1,6 @@
 // require the dependencies we installed
 const app = require('express')();
+var request = require('request');
 const responseTime = require('response-time');
 const shuffle = require('shuffle-array');
 const cassandra = require('cassandra-driver');
@@ -35,20 +36,20 @@ app.set('view engine', 'pug');
 class UrlBuilder {
   query(pid, resolve) {
     const query = 'SELECT * FROM photo WHERE pid = ' + pid;
-    // no promise support for cassandra client
+    // no promise support for cassandra client - bluebird promise
     db_client.execute(query, {prepare: true}, (err, result) => {
         if (err) console.log(err);
 
         const row = result.rows[0];
         // driver exposes list/set as native Arrays
-        const mid = this._arrayRandom(row.mid);
+        const mid = UrlBuilder._arrayRandom(row.mid);
         const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         resolve(photo_path);
       }
     );
   }
 
-  _arrayRandom(xs) {
+  static _arrayRandom(xs) {
     return xs[Math.floor(Math.random()*xs.length)];
   }
 
@@ -72,7 +73,7 @@ class UrlBuilder {
       let photo_paths = new Array(num);
       for (var i = 0; i < num; i++) {
         const row = result.rows[i];
-        const mid = this._arrayRandom(row.mid);
+        const mid = UrlBuilder._arrayRandom(row.mid);
         const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         photo_paths[i] = photo_path;
       }
@@ -105,30 +106,51 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  // console.log(req);
   fs.readFile(req.file.path, (err, data) => {
-    let image = new Buffer(data).toString('base64');
-    // TODO handle image base64;
-    res.end('uploaded');
-
+    const image = new Buffer(data).toString('base64');
     // assign a pid
+    // TODO get total photo number count from directory
     var pid = (++photo_num);
 
     // ask Directory for writable logical volumns
     var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
     db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
-      if (err) console.log("Error " + err);
+      if (err) console.err("Error: ", err);
 
-      let entry = result.rows[ Math.floor(Math.random() * result.rows.length) ];
+      let entry = UrlBuilder._arrayRandom(result.rows);
       let lvid = entry.lvid;
       let mid = entry.mid;
 
-      var insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);"
-      db_client.execute(insert_query, [pid, mid, lvid], { prepare: true}, (err) => {
-        if (err) console.log("Error " + err);
+      const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
+      db_client.execute(insert_query, [pid, mid, lvid], { prepare: true }, (err) => {
+        if (err) {
+          console.err("Error: ", err);
+          res.status(400).end(err);
+        } else {
+          // TODO: contact Store for write
+          const formData = {
+            file: image,
+          };
+          request.post({
+            url:'http://service.com/upload',
+            form: {
+              pid: pid,
+              lvid: lvid,
+            },
+            formData: formData,
+          }, (err, response, body) => {
+            if (err) {
+              console.error('upload failed:', err);
+              res.status(400).end(err);
+            } else {
+              console.log('Upload successful!  Server responded with:', body);
+              const msg = "Uploaded as pid: " + pid;
+              console.log(msg);
+              res.end(msg);
+            }
+          });
+        }
       });
-
-      // TODO: contact Cache for storing
     });
   });
 });
