@@ -3,6 +3,22 @@
 ## Specs
 URL: `http://<Cache>/<Machine id>/<Logical volume, Photo>`
 
+**mid** is the base64 encode of machine IP. 
+
+**Write** - from webfront to store: 
+
+URL: `http://<machine_ip>/upload/`
+
+Data:
+```
+lvid: <lvid>
+pid: <pid>
+file: image binary as it is 
+```
+
+[Transfer binary file over HTTP](http://stackoverflow.com/questions/1509743/what-is-a-good-way-to-transfer-binary-data-to-a-http-rest-api-service)
+
+
 ### Read
 <img src="./doc/imgs/read.png " style="width: 400px;" align="center"/>
 
