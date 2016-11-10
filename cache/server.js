@@ -64,12 +64,20 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
       };
 
       http.request(params, function(response) {
+        response.on('error', function(err) {
+          // handle errors with the request itself
+          console.error('Error with the response:', err.message);
+          res.status(400);
+          res.send('Request storage fails');
+        });
+
         var data = new Stream();
 
         response.on('data', function(chunk) {
           data.push(chunk);
         });
 
+        // TODO handle storage file pointer failure
         response.on('end', function() {
           var dataBuffer = data.read();
           res.setHeader('Content-Type', 'image/gif');
@@ -81,6 +89,11 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
           // Cache the image in the Redis.
           client.setex(photoid, 120, new Buffer(dataBuffer).toString('base64'));
         });
+      }).on('error', function(err) {
+        // handle errors with the request itself
+        console.error('Error with the HTTP request:', err.message);
+        res.status(400);
+        res.send('Request storage fails');
       }).end();
     }
   });

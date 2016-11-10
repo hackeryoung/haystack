@@ -35,22 +35,30 @@ app.get('/:lvid/:photoid', function(req, res) {
 
   client.lrange(photoid, 0, -1, function(err, reply) {
     if (err){
-      // TODO: handle error
-      console.log('error');
-      res.send('something is wrong');
+      const msg = 'In-memory mapping fails';
+      console.log(msg);
+      res.status(400);
+      res.send(msg);
     } else {
-      console.log(reply);
-      var offset = parseInt(reply[0]);
-      var size = parseInt(reply[1]);
-      var type = reply[2];
+      try {
+        console.log(reply);
+        var offset = parseInt(reply[0]);
+        var size = parseInt(reply[1]);
+        var type = reply[2];
 
-      var logicalVolume = fs.readFileSync("/root/data/"+lvid);
-      
-      var fp = new filePointer(logicalVolume);
-      var buffer = fp.copy_abs(offset, offset+size);
+        var logicalVolume = fs.readFileSync("/root/data/"+lvid);
 
-      res.setHeader('Content-Type', 'image/'+type);
-      res.end(new Buffer(buffer, 'base64'));  
+        var fp = new filePointer(logicalVolume);
+        var buffer = fp.copy_abs(offset, offset+size);
+
+        res.setHeader('Content-Type', 'image/'+type);
+        res.end(new Buffer(buffer, 'base64'));
+      } catch (e) {
+        const msg = "Offset lookup fails: " + e.message;
+        console.log(msg);
+        res.status(400);
+        res.send(msg);
+      }
     }
   });
 });
