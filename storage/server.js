@@ -36,7 +36,7 @@ app.get('/:lvid/:photoid', function(req, res) {
   client.lrange(photoid, 0, -1, function(err, reply) {
     if (err){
       const msg = 'In-memory mapping fails';
-      console.log(msg);
+      console.error(msg, err);
       res.status(400);
       res.send(msg);
     } else {
@@ -54,8 +54,8 @@ app.get('/:lvid/:photoid', function(req, res) {
         res.setHeader('Content-Type', 'image/'+type);
         res.end(new Buffer(buffer, 'base64'));
       } catch (e) {
-        const msg = "Offset lookup fails: " + e.message;
-        console.log(msg);
+        const msg = "Offset lookup fails";
+        console.error(msg, e);
         res.status(400);
         res.send(msg);
       }
