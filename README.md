@@ -3,6 +3,20 @@
 ## Specs
 URL: `http://<Cache>/<Machine id>/<Logical volume, Photo>`
 
+**mid** is the base64 encode of machine IP. 
+
+**Write** - from webfront to store: 
+
+URL: `http://<machine_ip>/upload/`
+
+data 
+```
+lvid: <lvid>
+pid: <pid>
+file: image binary as it is 
+```
+
+
 ### Read
 <img src="./doc/imgs/read.png " style="width: 400px;" align="center"/>
 
