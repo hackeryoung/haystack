@@ -19,10 +19,6 @@ client.on('error', function(err) {
   console.log("Error " + err);
 });
 
-// Hardcode the map from machine id to ip.
-client.set('machine_0', '172.20.0.6');
-
-
 // set the server listening port
 app.set('port', (process.env.PORT || 8080));
 
@@ -58,40 +54,34 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
         'source': 'redis'
       });
     } else {
-      // Not found in Redis, query from Haystack Store.
-      // Get the host IP from Redis.
-      client.get(['machine', mid].join('_'), function(error, ip) {
-        if(ip) {
-          // Found the IP of the machine
-          var params = {host: ip.toString(), 
-                        path: '/'+[lvid, pid].join('/'),
-                        port: 8080};
+      // Decode the IP of the machine
+      const ip = new Buffer(mid, 'base64').toString('ascii');
+      console.log("store ip: " + ip);
+      var params = {
+        host: ip,
+        path: '/'+[lvid, pid].join('/'),
+        port: 8080
+      };
 
-          http.request(params, function(response) {
-            var data = new Stream();
+      http.request(params, function(response) {
+        var data = new Stream();
 
-            response.on('data', function(chunk) {
-              data.push(chunk);
-            });
+        response.on('data', function(chunk) {
+          data.push(chunk);
+        });
 
-            response.on('end', function() {
-              var dataBuffer = data.read();
-              res.setHeader('Content-Type', 'image/gif');
-              res.end(new Buffer(dataBuffer, 'base64'));
-              console.log((new Date()).toTimeString(), {
-                'source': 'Haystack Store'
-              });
+        response.on('end', function() {
+          var dataBuffer = data.read();
+          res.setHeader('Content-Type', 'image/gif');
+          res.end(new Buffer(dataBuffer, 'base64'));
+          console.log((new Date()).toTimeString(), {
+            'source': 'Haystack Store'
+          });
 
-              // Cache the image in the Redis.
-              client.setex(photoid, 120, new Buffer(dataBuffer).toString('base64'));
-            });
-          }).end();
-
-        } else {
-          // IP of the machine not found.
-          console.log("Cannot find the IP of machine " + mid +' '+  + err);
-        }
-      });
+          // Cache the image in the Redis.
+          client.setex(photoid, 120, new Buffer(dataBuffer).toString('base64'));
+        });
+      }).end();
     }
   });
 });

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 WEBFRONT_CONTAINER=h_webfront
 CACHE_CONTAINER=h_cache
 STORAGE_CONTAINER=h_storage
