@@ -30,22 +30,15 @@ app.use(responseTime());
 
 // serve images in /photos/
 app.get('/:mid/:lvid/:pid', function(req, res) {
-  // TODO remove hard code
-  const hmap = {
-    1: '001',
-    2: '002',
-    3: '003',
-    4: '004',
-    5: '005',
-  };
-  var photoid = hmap[req.params.pid];
   var pid = req.params.pid;
   var mid = req.params.mid;
   var lvid = req.params.lvid;
   // res.sendFile(__dirname + '/imgs/phd_' + photoid + '.gif');
 
+  console.log((new Date()).toTimeString(), {'action':'read', 'pid':pid, 'mid':mid, 'lvid':lvid});
+
   // check redis cache first; if no hit, read from disk and cache it in readis
-  client.get(photoid, function(error, result) {
+  client.get(pid, function(error, result) {
     if (result) {
       // Found in Redis, just construct the response.
       res.setHeader('Content-Type', 'image/gif');
@@ -87,7 +80,7 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
           });
 
           // Cache the image in the Redis.
-          client.setex(photoid, 120, new Buffer(dataBuffer).toString('base64'));
+          client.setex(pid, 120, new Buffer(dataBuffer).toString('base64'));
         });
       }).on('error', function(err) {
         // handle errors with the request itself
@@ -99,6 +92,71 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
   });
 });
 
+// // Update image.
+// app.post('/upload', function(req, res) {
+//   var pid = req.body.pid;
+//   var mid = req.body.mid;
+//   var lvid = req.body.lvid;
+//   var image = req.body.image;
+
+//   console.log((new Date()).toTimeString(), {'action':'read', 'pid':pid, 'mid':mid, 'lvid':lvid});
+
+//   client.get(['machine', mid].join('-'), function(error, ip) {
+//     if(ip) {
+//       var postOptions = {
+//         host: ip.toString(), 
+//         path: '/upload',
+//         port: 8080,
+//         method: 'POST'
+//       };
+//       var postData = {
+//         'mid': mid,
+//         'lvid': lvid,
+//         'pid': pid,
+//         'image': image
+//       }
+      
+//       var postReq = http.request(postOptions, function(res) {
+//         res.setEncoding('utf8');
+//         res.on('data', function(chunk) {
+//           console.log('Response:' + chunk);
+//         });
+//       });
+//       postReq.write(postData);
+//       postReq.end();
+
+//       // Cache the image in the Redis.
+//       client.setex(pid, 120, image);
+//     } else {
+//       console.log("Cannot find the IP of machine " + mid +' '+ err);
+//     }
+//   });
+// });
+
+// // Delete image.
+// app.post('/delete', function(req, res) {
+//   var pid = req.body.pid;
+//   var mid = req.body.mid;
+//   var lvid = req.body.lvid;
+
+//   console.log((new Date()).toTimeString(), {'action':'read', 'pid':pid, 'mid':mid, 'lvid':lvid});
+
+//   client.get(['machine', mid].join('-'), function(error, ip) {
+//     if(ip) {
+//       var postOptions = {
+//         host: ip.toString(), 
+//         path: '/upload',
+//         port: 8080,
+//         method: 'POST'
+//       };
+//       TODO
+
+//       }
+//     } else {
+//       console.log("Cannot find the IP of machine " + mid +' '+ err);
+//     }
+//   });
+// });
 
 app.listen(app.get('port'), function() {
   console.log('Server listening on port: ', app.get('port'));
