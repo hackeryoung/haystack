@@ -48,12 +48,12 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
       });
     } else {
       // Decode the IP of the machine
-      const ip = new Buffer(mid, 'base64').toString('ascii');
+      const ip = new Buffer(mid, 'base64').toString('ascii').split(':');
       console.log("store ip: " + ip);
       var params = {
-        host: ip,
+        host: ip[0],
         path: '/'+[lvid, pid].join('/'),
-        port: 8080
+        port: ip[1]
       };
 
       http.request(params, function(response) {
