@@ -92,6 +92,15 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
   });
 });
 
+// Delete.
+app.delete('/:pid', function(req, res) {
+  var pid = req.params.pid;
+  client.del(pid);
+  res.status(200);
+  res.send("Deleted image with pid: " + pid);
+});
+
+
 // // Update image.
 // app.post('/upload', function(req, res) {
 //   var pid = req.body.pid;
