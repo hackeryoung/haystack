@@ -48,5 +48,3 @@ CREATE TABLE pid_counter (
 
 // maintain the next available pid
 UPDATE pid_counter SET counter_value = counter_value + 6 WHERE tag = 'main';
-=======
->>>>>>> a6f6be4044674f4944cb698fc582e7824e331c04
