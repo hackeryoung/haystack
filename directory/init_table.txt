@@ -38,3 +38,12 @@ VALUES (4, '172.20.0.5:8080', {'172.20.0.6:8080','172.20.0.7:8080'}, 1);
 
 INSERT INTO photo (pid, cache_url, mid, lvid)
 VALUES (5, '172.20.0.5:8080', {'172.20.0.6:8080','172.20.0.7:8080'}, 1);
+
+
+CREATE TABLE pid_counter ( 
+  tag varchar primary key,
+  counter_value counter 
+);
+
+UPDATE pid_counter SET counter_value = counter_value + 6 WHERE tag = 'main';
+
