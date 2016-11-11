@@ -166,26 +166,46 @@ app.delete('/photo/:photoid', (req, res) => {
       if (err) console.error(err);
     });
     */
-
     // Query cache to invalidate
-    request.delete({
-      url: 'http://' + [row.cache_url, row.pid].join('/'),
-    }, (err, response, body) => {
-      console.log("Cache: " + body);
+    const redis_promise = new Promise((resolve, reject) => {
+      request.delete({
+        url: 'http://' + [row.cache_url, row.pid].join('/'),
+      }, (err, response, body) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          console.log("Cache: " + body);
+          resolve();
+        }
+      });
     });
 
-
     // Query store machine to delete
+    const promises = [];
     for (let ip of row.mid) {
       const url = 'http://' + [ip, row.lvid, row.pid].join('/');
-      request.delete({
-        url: url,
-      }, (err, response, body) => {
-        console.log("Store: " + body);
-      })
+      promises.push(
+        new Promise((resolve, reject) => {
+          request.delete({
+            url: url,
+          }, (err, response, body) => {
+            if (err) {
+              console.error(err);
+              reject(err);
+            } else {
+              console.log("Store: " + body);
+              resolve();
+            }
+          });
+        })
+      );
     }
 
-    res.send("Deleting request sent to cache and store");
+    promises.push(redis_promise);
+    Promise.all(promises)
+        .then(() => res.send("Photo on all cache and stores deleted"))
+        .catch((err) => console.log(err));
   });
 });
 
