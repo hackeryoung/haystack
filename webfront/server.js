@@ -171,18 +171,21 @@ app.delete('/photo/:photoid', (req, res) => {
     request.delete({
       url: 'http://' + [row.cache_url, row.pid].join('/'),
     }, (err, response, body) => {
-      console.log(body);
+      console.log("Cache: " + body);
     });
 
-    /*
+
     // Query store machine to delete
     for (let ip of row.mid) {
+      const url = 'http://' + [ip, row.lvid, row.pid].join('/');
       request.delete({
-        url: 'http://' + [ip, row.lvid, row.pid].join('/'),
+        url: url,
+      }, (err, response, body) => {
+        console.log("Store: " + body);
       })
     }
-    */
-    res.send("Deleting");
+
+    res.send("Deleting request sent to cache and store");
   });
 });
 
