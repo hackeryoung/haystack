@@ -48,12 +48,12 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
       });
     } else {
       // Decode the IP of the machine
-      const ip = new Buffer(mid, 'base64').toString('ascii');
+      const ip = new Buffer(mid, 'base64').toString('ascii').split(':');
       console.log("store ip: " + ip);
       var params = {
-        host: ip,
+        host: ip[0],
         path: '/'+[lvid, pid].join('/'),
-        port: 8080
+        port: ip[1]
       };
 
       http.request(params, function(response) {
@@ -91,6 +91,15 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
     }
   });
 });
+
+// Delete.
+app.delete('/:pid', function(req, res) {
+  var pid = req.params.pid;
+  client.del(pid);
+  res.status(200);
+  res.send("Deleted image with pid: " + pid);
+});
+
 
 // // Update image.
 // app.post('/upload', function(req, res) {

@@ -1,5 +1,5 @@
-// require the dependencies we installed
 const app = require('express')();
+var request = require('request');
 const responseTime = require('response-time');
 const shuffle = require('shuffle-array');
 const cassandra = require('cassandra-driver');
@@ -17,7 +17,10 @@ db_client.connect(function(err) {
 
 
 const multer  = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+  dest: 'uploads/',
+  inMemory: true
+});
 const fs = require('fs');
 
 
@@ -35,20 +38,20 @@ app.set('view engine', 'pug');
 class UrlBuilder {
   query(pid, resolve) {
     const query = 'SELECT * FROM photo WHERE pid = ' + pid;
-    // no promise support for cassandra client
+    // no promise support for cassandra client - bluebird promise
     db_client.execute(query, {prepare: true}, (err, result) => {
         if (err) console.log(err);
 
         const row = result.rows[0];
         // driver exposes list/set as native Arrays
-        const mid = this._arrayRandom(row.mid);
+        const mid = UrlBuilder._arrayRandom(row.mid);
         const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         resolve(photo_path);
       }
     );
   }
 
-  _arrayRandom(xs) {
+  static _arrayRandom(xs) {
     return xs[Math.floor(Math.random()*xs.length)];
   }
 
@@ -72,7 +75,7 @@ class UrlBuilder {
       let photo_paths = new Array(num);
       for (var i = 0; i < num; i++) {
         const row = result.rows[i];
-        const mid = this._arrayRandom(row.mid);
+        const mid = UrlBuilder._arrayRandom(row.mid);
         const photo_path = this.build(row.pid, row.cache_url, mid, row.lvid);
         photo_paths[i] = photo_path;
       }
@@ -105,33 +108,87 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  // console.log(req);
-  fs.readFile(req.file.path, (err, data) => {
-    let image = new Buffer(data).toString('base64');
-    // TODO handle image base64;
-    res.end('uploaded');
+  var pid = (++photo_num);  // TODO, select the largest count from cassandra
+  // ask Directory for writable logical volumns
+  var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
+  db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
+    if (err) console.error("Error: ", err);
 
-    // assign a pid
-    var pid = (++photo_num);
+    let entry = UrlBuilder._arrayRandom(result.rows);
+    let lvid = entry.lvid;
 
-    // ask Directory for writable logical volumns
-    var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
-    db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
-      if (err) console.log("Error " + err);
-
-      let entry = result.rows[ Math.floor(Math.random() * result.rows.length) ];
-      let lvid = entry.lvid;
-      let mid = entry.mid;
-
-      var insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);"
-      db_client.execute(insert_query, [pid, mid, lvid], { prepare: true}, (err) => {
-        if (err) console.log("Error " + err);
-      });
-
-      // TODO: contact Cache for storing
+    const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
+    db_client.execute(insert_query, [pid, entry.mid, lvid], { prepare: true }, (err) => {
+      if (err) {
+        console.error("Error: ", err);
+        res.status(400).end(err);
+      } else {
+        console.log("Uploading to store");
+        const formData = {
+          'image': fs.createReadStream(req.file.path),
+        };
+        let mid = UrlBuilder._arrayRandom(entry.mid);  // TODO, write to all machines
+        request.post({
+          url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),
+          formData: formData,
+        }, (err, response, body) => {
+          if (err) {
+            console.error('upload failed:', err);
+            res.status(400).end(err);
+          } else {
+            console.log('Upload successful!  Server responded with:', body);
+            const msg = "Uploaded as pid: " + pid;
+            console.log(msg);
+            res.end(msg);
+          }
+        });
+      }
     });
   });
 });
+
+app.delete('/photo/:photoid', (req, res) => {
+  const pid = req.params.photoid;
+  redis_client.del(pid);
+  const query = "SELECT pid, cache_url, mid, lvid FROM photo WHERE pid = " + pid;
+  db_client.execute(query, {prepare: true}, (err, result) => {
+    if (err) console.log(err);
+
+    const row = result.rows[0];
+    if (!row) {
+      res.send("No key found, pid: " + pid).end();
+      return;
+    }
+
+    /*
+    const update = "DELETE FROM photo WHERE pid = " + row.pid;
+    db_client.execute(update, {prepare: true}, (err, result) => {
+      if (err) console.error(err);
+    });
+    */
+
+    // Query cache to invalidate
+    request.delete({
+      url: 'http://' + [row.cache_url, row.pid].join('/'),
+    }, (err, response, body) => {
+      console.log("Cache: " + body);
+    });
+
+
+    // Query store machine to delete
+    for (let ip of row.mid) {
+      const url = 'http://' + [ip, row.lvid, row.pid].join('/');
+      request.delete({
+        url: url,
+      }, (err, response, body) => {
+        console.log("Store: " + body);
+      })
+    }
+
+    res.send("Deleting request sent to cache and store");
+  });
+});
+
 
 app.get('/photo/:photoid', (req, res) => {
   const pid = req.params.photoid;
