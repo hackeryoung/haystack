@@ -109,7 +109,7 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  var pid = 6;
+  var pid = (++photo_num);  // TODO
   // ask Directory for writable logical volumns
   var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
   db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
@@ -130,9 +130,7 @@ app.post('/photo/', upload.single('image'), (req, res) => {
           'image': fs.createReadStream(req.file.path),
         };
         request.post({
-          // TODO use mid
-          // url:'http://172.20.0.6:8080/' + [lvid, pid, 'gif'].join('/'),
-          url : 'http://172.20.0.6:8080/1/6/gif',
+          url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),
           formData: formData,
         }, (err, response, body) => {
           if (err) {
