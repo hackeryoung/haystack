@@ -15,7 +15,10 @@ PROXY_CONTAINER=h_proxy
 WEBFRONT_CONTAINER=h_webfront
 DIRECTORY_CONTAINER=h_directory
 CACHE_CONTAINER=h_cache
-STORAGE_CONTAINER=h_storage
+STORAGE_CONTAINER1=h_storage1
+STORAGE_CONTAINER2=h_storage2
+
+
 # DATA_CONTAINER=h_data
 
 # Set the name of the bridge network
@@ -36,7 +39,8 @@ PROXY_IP=172.20.0.2
 WEBFRONT_IP=172.20.0.3
 DIRECTORY_IP=172.20.0.4
 CACHE_IP=172.20.0.5
-STORAGE_IP=172.20.0.6
+STORAGE_IP1=172.20.0.6
+STORAGE_IP2=172.20.0.7
 
 
 # Set the image directories
@@ -46,7 +50,8 @@ STORAGE_IP=172.20.0.6
 # Set the port
 PROXY_SERVER_PORT=80
 CACHE_SERVER_PORT=8080 # cache server
-STORAGE_SERVER_PORT=8081 #storage server
+STORAGE_SERVER_PORT1=8081 #storage server1
+STORAGE_SERVER_PORT2=8082 #storage server2
 STORAGE_INTERNAL_PORT=8080 # storage internal port
 
 
@@ -129,8 +134,15 @@ docker run -itd \
 
 # Create the storage container
 docker run -itd \
-  --name $STORAGE_CONTAINER \
+  --name $STORAGE_CONTAINER1 \
   --network $NETWORK \
-  --ip $STORAGE_IP \
-  -p $STORAGE_SERVER_PORT:$STORAGE_INTERNAL_PORT \
+  --ip $STORAGE_IP1 \
+  -p $STORAGE_SERVER_PORT1:$STORAGE_INTERNAL_PORT \
+  $STORAGE_IMAGE
+
+docker run -itd \
+  --name $STORAGE_CONTAINER2 \
+  --network $NETWORK \
+  --ip $STORAGE_IP2 \
+  -p $STORAGE_SERVER_PORT2:$STORAGE_INTERNAL_PORT \
   $STORAGE_IMAGE
