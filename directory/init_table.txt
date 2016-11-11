@@ -38,7 +38,6 @@ VALUES (4, '172.20.0.5:8080', {'172.20.0.6:8080','172.20.0.7:8080'}, 0);
 
 INSERT INTO photo (pid, cache_url, mid, lvid)
 VALUES (5, '172.20.0.5:8080', {'172.20.0.6:8080','172.20.0.7:8080'}, 0);
-<<<<<<< HEAD
 
 
 CREATE TABLE pid_counter ( 
