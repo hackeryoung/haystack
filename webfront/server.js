@@ -1,4 +1,3 @@
-// require the dependencies we installed
 const app = require('express')();
 var request = require('request');
 const responseTime = require('response-time');
@@ -168,14 +167,10 @@ app.delete('/photo/:photoid', (req, res) => {
     });
     */
 
-
     // Query cache to invalidate
     request.delete({
-      // url: 'http://' + [row.cache_url, row.pid].join('/'),
-      url: 'http://127.0.0.1:8080/1'
+      url: 'http://' + [row.cache_url, row.pid].join('/'),
     }, (err, response, body) => {
-      console.log(err);
-      console.log(response);
       console.log(body);
     });
 
