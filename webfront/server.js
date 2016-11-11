@@ -125,24 +125,35 @@ app.post('/photo/', upload.single('image'), (req, res) => {
         res.status(400).end(err);
       } else {
         console.log("Uploading to store");
+        // Write to store machines
         const formData = {
           'image': fs.createReadStream(req.file.path),
         };
-        let mid = UrlBuilder._arrayRandom(entry.mid);  // TODO, write to all machines
-        request.post({
-          url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),
-          formData: formData,
-        }, (err, response, body) => {
-          if (err) {
-            console.error('upload failed:', err);
-            res.status(400).end(err);
-          } else {
-            console.log('Upload successful!  Server responded with:', body);
-            const msg = "Uploaded as pid: " + pid;
-            console.log(msg);
-            res.end(msg);
-          }
+        const promises = entry.mid.map((mid) => {
+          return new Promise((resolve, reject) => {
+            request.post({
+              url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),  // TODO get file type from user upload
+              formData: formData,
+            }, (err, response, body) => {
+              if (err) {
+                reject(err);
+              } else {
+                const msg = "Uploaded as pid: " + pid;
+                resolve(msg);
+              }
+            });
+          });
         });
+
+        Promise.all(promises)
+            .then((msgs) => {  // resolve iterable
+              msgs.map((msg) => console.log(msg));
+              res.end("Photo uploaded successfully")
+            })
+            .catch((err) => {
+              console.error("Uploaded fail: ", err);
+              res.status(400).end(err)
+            });
       }
     });
   });
