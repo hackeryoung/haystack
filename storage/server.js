@@ -14,6 +14,10 @@ var client = redis.createClient();
 
 // Set key value pair: [photoid, [offset, size, type]]
 client.rpush(['1', '0', '82931', 'gif']);
+client.rpush(['2', '131040', '56689', 'gif']);
+client.rpush(['3', '187729', '48109', 'gif']);
+client.rpush(['4', '235838', '72917', 'gif']);
+client.rpush(['5', '308755', '67447', 'gif']);
 
 // set the server listening port
 app.set('port', (process.env.PORT || 8080));
