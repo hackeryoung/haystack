@@ -6,7 +6,8 @@ const redis = require('redis');
 const fs = require('fs');
 const filePointer = require("filepointer");
 const multer  = require('multer');
-const upload = multer({ dest: 'uploads/' }).single('image');
+var storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single('image');
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
@@ -78,26 +79,23 @@ app.post('/:lvid/:photoid/:type', function(req, res) {
     if(err) {
         return res.end("Error uploading file.");
     }
-    fs.readFile(req.file.path, (err, data) => {
-      // How to make it as base64
-      // var image = new Buffer(data).toString('base64');
       
-      var image = new Buffer(data);
-      var size = image.length;
-      var offset = fs.statSync("/root/data/"+lvid)['size'];
-      
-      fs.appendFile("/root/data/"+lvid, image, function(err){
-        if (err){
-          // TODO: handle error
-          console.log('something is wrong: '+err);
-          res.send('something is wrong');
-          process.exit(1);
-        } else {
-          client.rpush([photoid, offset, size, type]);
-          res.send("OK");
-        }
-      });
+    var image = req.file.buffer;
+    var size = image.length;
+    var offset = fs.statSync("/root/data/"+lvid)['size'];
+    
+    fs.appendFile("/root/data/"+lvid, image, function(err){
+      if (err){
+        // TODO: handle error
+        console.log('something is wrong: '+err);
+        res.send('something is wrong');
+        process.exit(1);
+      } else {
+        client.rpush([photoid, offset, size, type]);
+        res.send("OK");
+      }
     });
+
 
   });
 
