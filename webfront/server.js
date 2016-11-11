@@ -123,7 +123,7 @@ app.post('/photo/', upload.single('image'), (req, res) => {
       let lvid = entry.lvid;
       let mid = entry.mid;
 
-      var insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);"
+      var insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '172.20.0.5:8080', ?, ?);"
       db_client.execute(insert_query, [pid, mid, lvid], { prepare: true}, (err) => {
         if (err) console.log("Error " + err);
       });
