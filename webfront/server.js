@@ -109,7 +109,7 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  var pid = (++photo_num);  // TODO
+  var pid = (++photo_num);  // TODO, select the largest count from cassandra
   // ask Directory for writable logical volumns
   var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
   db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
@@ -117,7 +117,6 @@ app.post('/photo/', upload.single('image'), (req, res) => {
 
     let entry = UrlBuilder._arrayRandom(result.rows);
     let lvid = entry.lvid;
-    let mid = UrlBuilder._arrayRandom(entry.mid);  // TODO, select mid
 
     const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
     db_client.execute(insert_query, [pid, entry.mid, lvid], { prepare: true }, (err) => {
@@ -129,6 +128,7 @@ app.post('/photo/', upload.single('image'), (req, res) => {
         const formData = {
           'image': fs.createReadStream(req.file.path),
         };
+        let mid = UrlBuilder._arrayRandom(entry.mid);  // TODO, write to all machines
         request.post({
           url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),
           formData: formData,
@@ -147,6 +147,42 @@ app.post('/photo/', upload.single('image'), (req, res) => {
     });
   });
 });
+
+app.delete('/photo/:photoid', (req, res) => {
+  const pid = req.params.photoid;
+  redis_client.del(pid);
+  const query = "SELECT pid, cache_url, mid, lvid FROM photo WHERE pid = " + pid;
+  db_client.execute(query, {prepare: true}, (err, result) => {
+    if (err) console.log(err);
+
+    const row = result.rows[0];
+    if (!row) {
+      res.send("No key found, pid: " + pid).end();
+      return;
+    }
+
+    const update = "DELETE FROM photo WHERE pid = " + row.pid;
+    db_client.execute(update, {prepare: true}, (err, result) => {
+      if (err) console.error(err);
+    });
+
+    /*
+    // Query cache to invalidate
+    request.delete({
+      url: 'http://' + [row.cache_url, pid].join('/'),
+    });
+
+    // Query store machine to delete
+    for (let ip of row.mid) {
+      request.delete({
+        url: 'http://' + [ip, row.lvid, row.pid].join('/'),
+      })
+    }
+    */
+    res.send("Deleting");
+  });
+});
+
 
 app.get('/photo/:photoid', (req, res) => {
   const pid = req.params.photoid;
