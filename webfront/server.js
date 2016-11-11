@@ -87,6 +87,7 @@ class UrlBuilder {
   build(pid, cacheUrl, machineId, logicialVolId) {
     // sample: http://localhost:8080/machineIdBase64/logicialVolId/pid
     const machineIdBase64 = new Buffer(machineId).toString('base64');
+    cacheUrl = "127.0.0.1:8080";  // exposed port of cache to client
     const url = "http://" + [cacheUrl, machineIdBase64, logicialVolId, pid].join("/");
     return url;
   }
