@@ -161,17 +161,25 @@ app.delete('/photo/:photoid', (req, res) => {
       return;
     }
 
+    /*
     const update = "DELETE FROM photo WHERE pid = " + row.pid;
     db_client.execute(update, {prepare: true}, (err, result) => {
       if (err) console.error(err);
     });
+    */
 
-    /*
+
     // Query cache to invalidate
     request.delete({
-      url: 'http://' + [row.cache_url, pid].join('/'),
+      // url: 'http://' + [row.cache_url, row.pid].join('/'),
+      url: 'http://127.0.0.1:8080/1'
+    }, (err, response, body) => {
+      console.log(err);
+      console.log(response);
+      console.log(body);
     });
 
+    /*
     // Query store machine to delete
     for (let ip of row.mid) {
       request.delete({
