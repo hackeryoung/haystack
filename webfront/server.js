@@ -25,8 +25,6 @@ const upload = multer({
 const fs = require('fs');
 
 
-// TODO: pids management
-// var photo_num = 5;
 const demo_pids = [
   TimeUuid.fromString('97b72fb0-a84a-11e6-bf37-6d2c86545d91'),
   TimeUuid.fromString('8c2a5690-a84a-11e6-bf37-6d2c86545d91'),
@@ -100,7 +98,7 @@ class UrlBuilder {
   build(pid, cacheUrl, machineId, logicialVolId) {
     // sample: http://localhost:8080/machineIdBase64/logicialVolId/pid
     const machineIdBase64 = new Buffer(machineId).toString('base64');
-    // cacheUrl = "127.0.0.1:8080";  // exposed port of cache to client
+    cacheUrl = "127.0.0.1:8080";  // exposed port of cache to client
     const url = "http://" + [cacheUrl, machineIdBase64, logicialVolId, pid.toString()].join("/");
     return url;
   }
