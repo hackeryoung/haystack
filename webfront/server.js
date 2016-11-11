@@ -18,7 +18,10 @@ db_client.connect(function(err) {
 
 
 const multer  = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+  dest: 'uploads/',
+  inMemory: true
+});
 const fs = require('fs');
 
 
@@ -106,51 +109,43 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  fs.readFile(req.file.path, (err, data) => {
-    const image = new Buffer(data).toString('base64');
-    // assign a pid
-    // TODO get total photo number count from directory
-    var pid = (++photo_num);
+  var pid = 6;
+  // ask Directory for writable logical volumns
+  var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
+  db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
+    if (err) console.error("Error: ", err);
 
-    // ask Directory for writable logical volumns
-    var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
-    db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
-      if (err) console.err("Error: ", err);
+    let entry = UrlBuilder._arrayRandom(result.rows);
+    let lvid = entry.lvid;
+    let mid = UrlBuilder._arrayRandom(entry.mid);  // TODO, select mid
 
-      let entry = UrlBuilder._arrayRandom(result.rows);
-      let lvid = entry.lvid;
-      let mid = entry.mid;
-
-      const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
-      db_client.execute(insert_query, [pid, mid, lvid], { prepare: true }, (err) => {
-        if (err) {
-          console.err("Error: ", err);
-          res.status(400).end(err);
-        } else {
-          // TODO: contact Store for write
-          const formData = {
-            file: image,
-          };
-          request.post({
-            url:'http://service.com/upload',
-            form: {
-              pid: pid,
-              lvid: lvid,
-            },
-            formData: formData,
-          }, (err, response, body) => {
-            if (err) {
-              console.error('upload failed:', err);
-              res.status(400).end(err);
-            } else {
-              console.log('Upload successful!  Server responded with:', body);
-              const msg = "Uploaded as pid: " + pid;
-              console.log(msg);
-              res.end(msg);
-            }
-          });
-        }
-      });
+    const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
+    db_client.execute(insert_query, [pid, entry.mid, lvid], { prepare: true }, (err) => {
+      if (err) {
+        console.error("Error: ", err);
+        res.status(400).end(err);
+      } else {
+        console.log("Uploading to store");
+        const formData = {
+          'image': fs.createReadStream(req.file.path),
+        };
+        request.post({
+          // TODO use mid
+          // url:'http://172.20.0.6:8080/' + [lvid, pid, 'gif'].join('/'),
+          url : 'http://172.20.0.6:8080/1/6/gif',
+          formData: formData,
+        }, (err, response, body) => {
+          if (err) {
+            console.error('upload failed:', err);
+            res.status(400).end(err);
+          } else {
+            console.log('Upload successful!  Server responded with:', body);
+            const msg = "Uploaded as pid: " + pid;
+            console.log(msg);
+            res.end(msg);
+          }
+        });
+      }
     });
   });
 });

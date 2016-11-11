@@ -20,6 +20,6 @@
     "cassandra-driver": "^3.1.5",
     "shuffle-array": "^1.0.0",
     "multer": "^1.2.0",
-    "request": "^2.78.1"
+    "request": "^2.78.0"
   }
 }
