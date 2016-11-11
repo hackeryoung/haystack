@@ -3,6 +3,7 @@ var request = require('request');
 const responseTime = require('response-time');
 const shuffle = require('shuffle-array');
 const cassandra = require('cassandra-driver');
+const TimeUuid = require('cassandra-driver').types.TimeUuid;
 
 const redis = require('redis');
 const redis_client = redis.createClient();
@@ -25,7 +26,14 @@ const fs = require('fs');
 
 
 // TODO: pids management
-var photo_num = 5;
+// var photo_num = 5;
+const demo_pids = [
+  TimeUuid.fromString('97b72fb0-a84a-11e6-bf37-6d2c86545d91'),
+  TimeUuid.fromString('8c2a5690-a84a-11e6-bf37-6d2c86545d91'),
+  TimeUuid.fromString('fe7c3ce0-a84a-11e6-bf37-6d2c86545d91'),
+  TimeUuid.fromString('0d4f8e70-a84b-11e6-bf37-6d2c86545d91'),
+  TimeUuid.fromString('0dd9a600-a84b-11e6-bf37-6d2c86545d91'),
+];
 
 
 app.set('port', (process.env.PORT || 80));
@@ -37,9 +45,9 @@ app.set('view engine', 'pug');
 
 class UrlBuilder {
   query(pid, resolve) {
-    const query = 'SELECT * FROM photo WHERE pid = ' + pid;
+    const query = 'SELECT * FROM photo WHERE pid = ?';
     // no promise support for cassandra client - bluebird promise
-    db_client.execute(query, {prepare: true}, (err, result) => {
+    db_client.execute(query, [pid], {prepare: true}, (err, result) => {
         if (err) console.log(err);
 
         const row = result.rows[0];
@@ -58,9 +66,14 @@ class UrlBuilder {
   randomQuery(num, resolve) {
     // randomly generate $num photoids to simulate a dynamic webpage
     // and generate corresponding query
-    var ids = shuffle(Array.apply(null, Array(photo_num)).map(function(_, i) {
-      return i + 1;
+    var indexes = shuffle(Array.apply(null, Array(demo_pids.length)).map(function(_, i) {
+      return i;
     })).slice(0, num);
+
+    var ids = [];
+    for (var i = 0; i < indexes.length; i++)
+      ids.push(demo_pids[indexes[i]]);
+
     var query = 'SELECT * FROM photo WHERE pid IN ( ? ';
     for (var i = 1; i < num; i++) {
       query += ', ? ';
@@ -87,8 +100,8 @@ class UrlBuilder {
   build(pid, cacheUrl, machineId, logicialVolId) {
     // sample: http://localhost:8080/machineIdBase64/logicialVolId/pid
     const machineIdBase64 = new Buffer(machineId).toString('base64');
-    cacheUrl = "127.0.0.1:8080";  // exposed port of cache to client
-    const url = "http://" + [cacheUrl, machineIdBase64, logicialVolId, pid].join("/");
+    // cacheUrl = "127.0.0.1:8080";  // exposed port of cache to client
+    const url = "http://" + [cacheUrl, machineIdBase64, logicialVolId, pid.toString()].join("/");
     return url;
   }
 }
@@ -109,7 +122,9 @@ app.get('/upload/', (req, res) => {
 });
 
 app.post('/photo/', upload.single('image'), (req, res) => {
-  var pid = (++photo_num);  // TODO, select the largest count from cassandra
+  // auto-assign a pid
+  var pid = TimeUuid.now();
+
   // ask Directory for writable logical volumns
   var lvid_query = "SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING";
   db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
@@ -132,13 +147,13 @@ app.post('/photo/', upload.single('image'), (req, res) => {
         const promises = entry.mid.map((mid) => {
           return new Promise((resolve, reject) => {
             request.post({
-              url: 'http://' + [mid, lvid, pid, 'gif'].join('/'),  // TODO get file type from user upload
+              url: 'http://' + [mid, lvid, pid.toString(), req.file.mimetype.split('/')[1]].join('/'),
               formData: formData,
             }, (err, response, body) => {
               if (err) {
                 reject(err);
               } else {
-                const msg = "Uploaded as pid: " + pid;
+                const msg = "Uploaded as pid: " + pid.toString() + " in " + mid;
                 resolve(msg);
               }
             });
@@ -160,15 +175,15 @@ app.post('/photo/', upload.single('image'), (req, res) => {
 });
 
 app.delete('/photo/:photoid', (req, res) => {
-  const pid = req.params.photoid;
-  redis_client.del(pid);
-  const query = "SELECT pid, cache_url, mid, lvid FROM photo WHERE pid = " + pid;
-  db_client.execute(query, {prepare: true}, (err, result) => {
+  const pid = TimeUuid.fromString(req.params.photoid);
+  redis_client.del(pid.toString());
+  const query = "SELECT pid, cache_url, mid, lvid FROM photo WHERE pid = ? ";
+  db_client.execute(query, [pid], {prepare: true}, (err, result) => {
     if (err) console.log(err);
 
     const row = result.rows[0];
     if (!row) {
-      res.send("No key found, pid: " + pid).end();
+      res.send("No key found, pid: " + pid.toString).end();
       return;
     }
 
@@ -181,7 +196,7 @@ app.delete('/photo/:photoid', (req, res) => {
     // Query cache to invalidate
     const redis_promise = new Promise((resolve, reject) => {
       request.delete({
-        url: 'http://' + [row.cache_url, row.pid].join('/'),
+        url: 'http://' + [row.cache_url, row.pid.toString()].join('/'),
       }, (err, response, body) => {
         if (err) {
           console.error(err);
@@ -196,7 +211,7 @@ app.delete('/photo/:photoid', (req, res) => {
     // Query store machine to delete
     const promises = [];
     for (let ip of row.mid) {
-      const url = 'http://' + [ip, row.lvid, row.pid].join('/');
+      const url = 'http://' + [ip, row.lvid, row.pid.toString()].join('/');
       promises.push(
         new Promise((resolve, reject) => {
           request.delete({
@@ -223,10 +238,10 @@ app.delete('/photo/:photoid', (req, res) => {
 
 
 app.get('/photo/:photoid', (req, res) => {
-  const pid = req.params.photoid;
+  const pid = TimeUuid.fromString(req.params.photoid);
   const builder = new UrlBuilder();
 
-  redis_client.get(pid, (err, result) => {
+  redis_client.get(pid.toString(), (err, result) => {
     if (err) console.log(err);
 
     if (result) {
@@ -237,7 +252,7 @@ app.get('/photo/:photoid', (req, res) => {
       });
     } else {
       builder.query(pid, (photo_path) => {
-        redis_client.setex(pid, 120, photo_path);
+        redis_client.setex(pid.toString(), 120, photo_path);
         console.log('Cache updated');
 
         res.render('photo', {
