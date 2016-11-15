@@ -161,7 +161,7 @@ app.post('/photo/', upload.single('image'), (req, res) => {
         Promise.all(promises)
             .then((msgs) => {  // resolve iterable
               msgs.map((msg) => console.log(msg));
-              res.end("Photo uploaded successfully")
+              res.end("Photo uploaded successfully, pid: " + pid);
             })
             .catch((err) => {
               console.error("Uploaded fail: ", err);
@@ -185,12 +185,18 @@ app.delete('/photo/:photoid', (req, res) => {
       return;
     }
 
-    /*
     const update = "DELETE FROM photo WHERE pid = " + row.pid;
-    db_client.execute(update, {prepare: true}, (err, result) => {
-      if (err) console.error(err);
+    const cass_promise = new Promise((resolve, reject) => {
+      db_client.execute(update, {prepare: true}, (err, result) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
-    */
+
     // Query cache to invalidate
     const redis_promise = new Promise((resolve, reject) => {
       request.delete({
@@ -227,9 +233,10 @@ app.delete('/photo/:photoid', (req, res) => {
       );
     }
 
+    promises.push(cass_promise);
     promises.push(redis_promise);
     Promise.all(promises)
-        .then(() => res.send("Photo on all cache and stores deleted"))
+        .then(() => res.send("Photo on all caches and stores deleted"))
         .catch((err) => console.log(err));
   });
 });
