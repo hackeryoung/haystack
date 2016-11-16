@@ -46,6 +46,9 @@ app.get('/:mid/:lvid/:pid', function(req, res) {
       console.log((new Date()).toTimeString(), {
         'source': 'redis'
       });
+
+      // LRU
+      client.expire(pid, 120);
     } else {
       // Decode the IP of the machine
       const ip = new Buffer(mid, 'base64').toString('ascii').split(':');
