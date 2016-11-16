@@ -125,7 +125,7 @@ app.post('/photo/', upload.single('image'), (req, res) => {
   // auto-assign a pid
   var pid = TimeUuid.now();
 
-  // ask Directory for writable logical volumns
+  // ask Directory for writable logical volumes
   var lvid_query = 'SELECT lvid, mid FROM store WHERE status = 1 LIMIT 5 ALLOW FILTERING';
   db_client.execute(lvid_query, [], { prepare: true }, (err, result) => {
     if (err) console.error('Error: ', err);
@@ -133,7 +133,8 @@ app.post('/photo/', upload.single('image'), (req, res) => {
     let entry = UrlBuilder._arrayRandom(result.rows);
     let lvid = entry.lvid;
 
-    const insert_query = 'INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, "127.0.0.1:8080", ?, ?);';
+    // Column names that contain characters that CQL cannot parse need to be enclosed in double quotation marks in CQL.
+    const insert_query = "INSERT INTO photo (pid, cache_url, mid, lvid) VALUES (?, '127.0.0.1:8080', ?, ?);";
     db_client.execute(insert_query, [pid, entry.mid, lvid], { prepare: true }, (err) => {
       if (err) {
         console.error('Error: ', err);
