@@ -78,8 +78,6 @@ docker run -itd --name dummy dummy_image
 ```
 there are some tricky issues. The fact is that setting up the Cassandra server in `h_directory` could take some time. If you run `h_webfront` immediately after `h_directory`, the Node.js server in `h_webfront` could fail because it cannot connect to the Cassandra server right away. Also, you must make sure that the target keyspace, such as `photo`, exists in the Cassandra server before you launch the Node.js server.
 
-[Live Demo](http://playground.hyoung.me/)
-
 ## Prototype Performance
 With Chrome Developer Tools and `response-time` package in Node.js server, we could analyze the performance of our [prototype](http://playground.hyoung.me/). At the beginning, nothing is in cache and the webpage response time is shown below
 <img src="./doc/imgs/case1.png " style="width: 400px;" align="center"/>
@@ -117,17 +115,11 @@ From these two examples, we could observe that caching does offer some performan
 ### Components Description
 All components are set up in a subset `172.20.0.0\16`. Only the reverse proxy server and the Cache server are exposed to the public.
 
-TODO priority is indicated by the number of ★
-
 #### Reverse Proxy Server - Nginx
 Responsibilities
 
 * server as front-end web servers gateway
 * load-balance client requests among front-end web servers
-
-**TODOs**
-
-* ★ add requests load-balancing feature among at least two front-end web servers
 
 #### Front-end Web Server - Node.js
 Responsibilities
@@ -137,21 +129,6 @@ Responsibilities
 * contact the Directory (Cassandra server) for specific photo information with photo ids
 * construct photo URLs and embed them into the webpage
 * return the webpage to the client
-
-**TODOs**
-
-* ★★★ redesign the photo URL template that contains information about
-	* Cache server ip address
-	* Store machine id
-	* logical volume id
-	* photo id
-* ★★ add photo upload feature
-	* assign a photo id to the uploaded photo
-	* send photo id to the Directory and ask for writable Store machines information
-	* store the uploaded photo in writable Stores
-* ★ add photo delete feature
-* ★ deploy at least two servers to demonstarte the capability of scaling
-
 
 #### Haystack Directory - Cassandra
 Responsibilities
@@ -164,42 +141,13 @@ Responsibilities
 		(livd INT PRIMARY KEY, mid SET<INT>, status INT)
 	Here, `status` field has two possible values, 0 for readably-only and 1 for writable.
 
-**TODOs**
-
-* ~~★★★ redesign photo table schema such as~~
-
-		(pid INT PRIMARY KEY, logical_volume_id INT)
-* ~~★★ design a Store machine mapping table schema such as~~
-
-		(logical_volume_id INT PRIMARY KEY, Store_machine_id INT)
-* ~~★★ design a Store machine status table schema such as~~
-
-		(Store_machine_id INT PRIMARY KEY, writable_flag INT)
-* ~~★ accept query for writable Store machine~~
-
-
-
 #### Haystack Cache - Redis & Node.js
 Responsibilities
 
-* return requested photos
-
-**TODOs**
-
-* ★★ change the photo fetch (from Store) interface after the new-designed file system is up
-
+* write-through cache 
 
 #### Haystack Store - Docker Data Volume
 Responsibilities
 
+* Haystack file storage
 * provide quick photo read based on photo id
-
-
-**TODOs**
-
-* ★★★ design a file system that could read/write photo quickly
-	* design metadata
-	* design file needle
-	* design file read/write operation by filename, offset, and size
-
-
