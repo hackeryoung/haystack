@@ -80,6 +80,7 @@ echo "Start running Haystack prototype"
 echo "-----------------------------------------------------------"
 
 # Create a bridge network for the components
+echo "<Creating bridge network>"
 docker network create \
   --driver bridge \
   --subnet $SUBNET \
@@ -87,12 +88,13 @@ docker network create \
   $NETWORK
 
 
-# Create a data volumn container to simulate Distributed File System
+# Create a data volume container to simulate Distributed File System
 # docker run -d --name $DATA_CONTAINER $DATA_IMAGE
 
 # Create the Cache server container
 # Currently use a Docker data volume to simulate Distributed File System
 # indicated by flag '-v'
+echo "<Creating a Cache server container>"
 docker run -itd \
   --name $CACHE_CONTAINER \
   --network $NETWORK \
@@ -103,6 +105,7 @@ docker run -itd \
 
 
 # Create the Directory server container
+echo "<Creating Directory Server>"
 docker run -itd \
   --name $DIRECTORY_CONTAINER \
   --network $NETWORK \
@@ -113,10 +116,10 @@ docker run -itd \
 # Create a tiny table
 sleep 30 # wait for Cassandra initialization
 docker exec -d $DIRECTORY_CONTAINER cqlsh -f /root/init_table.txt
-
 sleep 30 # wait for Cassandra table creation
 
 # Create the web front server container
+echo "<Creating Web Front Server>"
 docker run -itd \
   --name $WEBFRONT_CONTAINER \
   --network $NETWORK \
@@ -125,6 +128,7 @@ docker run -itd \
 
 
 # Create the proxy container
+echo "<Creating a Nginx Reverse Proxy in front of Web Front Server>"
 docker run -itd \
   --name $PROXY_CONTAINER \
   --network $NETWORK \
@@ -133,6 +137,7 @@ docker run -itd \
   $PROXY_IMAGE
 
 # Create the storage container
+echo "<Creating Storage Container Number 1>"
 docker run -itd \
   --name $STORAGE_CONTAINER1 \
   --network $NETWORK \
@@ -140,6 +145,7 @@ docker run -itd \
   -p $STORAGE_SERVER_PORT1:$STORAGE_INTERNAL_PORT \
   $STORAGE_IMAGE
 
+echo "<Creating Storage Container Number 2>"
 docker run -itd \
   --name $STORAGE_CONTAINER2 \
   --network $NETWORK \

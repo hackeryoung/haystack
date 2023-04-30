@@ -1,4 +1,4 @@
-FROM nginx:1.11.5 
+FROM nginx:bullseye
 MAINTAINER Mingyang Wang <miw092@eng.uced.edu>
 
 # override default configuration

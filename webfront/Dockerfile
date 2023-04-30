@@ -1,4 +1,4 @@
-FROM node:7.0.0
+FROM node:20-buster
 MAINTAINER Mingyang Wang <miw092@eng.uced.edu>
 
 # Install necessary dependencies and tools
