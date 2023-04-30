@@ -87,7 +87,7 @@ docker network create \
   $NETWORK
 
 
-# Create a data volumn container to simulate Distributed File System
+# Create a data volume container to simulate Distributed File System
 # docker run -d --name $DATA_CONTAINER $DATA_IMAGE
 
 # Create the Cache server container

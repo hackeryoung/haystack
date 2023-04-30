@@ -1,13 +1,16 @@
-FROM node:7.0.0
+FROM node:20-buster
 MAINTAINER Kun Huang <kuh004@ucsd.edu>, Junbo Ke <juke@ucsd.edu>
 
 # Install necessary dependencies and tools
 RUN apt-get update && apt-get install -y redis-server
-RUN npm install filepointer
+
 
 # Create app directory
 RUN mkdir -p /root/app
 WORKDIR /root/app
+
+# This should be after setting up WORKDIR
+RUN npm install filepointer
 
 # Install app dependences
 COPY package.json /root/app
