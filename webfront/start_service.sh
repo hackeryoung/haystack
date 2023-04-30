@@ -1,2 +1,1 @@
-/usr/bin/redis-server &
-node server.js
+/usr/bin/redis-server & node server.js
